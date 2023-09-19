@@ -1,0 +1,2 @@
+,model,best_score,best_params
+0,random_forest,0.8148034078224977,"{'bootstrap': False, 'class_weight': 'balanced', 'criterion': 'gini', 'max_depth': 40, 'max_features': 'log2', 'min_samples_split': 5, 'n_estimators': 40, 'warm_start': True}"

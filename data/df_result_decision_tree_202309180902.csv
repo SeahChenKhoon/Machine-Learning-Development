@@ -1,0 +1,2 @@
+,param_max_depth,param_max_leaf_nodes,param_splitter,param_max_features,param_min_impurity_decrease,param_class_weight,mean_test_score
+0,1280,1280,best,50,0.5,balanced,0.14798805340898627

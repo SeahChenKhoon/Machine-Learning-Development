@@ -1,0 +1,2 @@
+,param_n_neighbors,param_weights,param_metric,param_algorithm,param_leaf_size,param_p,mean_test_score
+0,15,distance,cityblock,ball_tree,200,1,0.7375797023621361

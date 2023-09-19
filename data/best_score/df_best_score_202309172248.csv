@@ -1,0 +1,4 @@
+,model,best_score,best_params
+0,decision_tree,0.7819043747978445,"{'max_depth': 1280, 'max_features': 30, 'max_leaf_nodes': 1280, 'splitter': 'best'}"
+1,knn,0.7126619857561179,"{'algorithm': 'ball_tree', 'leaf_size': 40, 'metric': 'euclidean', 'n_neighbors': 15, 'weights': 'distance'}"
+2,random_forest,0.8186633830891668,"{'bootstrap': False, 'criterion': 'gini', 'max_depth': 40, 'n_estimators': 40}"

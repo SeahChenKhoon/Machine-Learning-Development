@@ -1,0 +1,5 @@
+,param_max_depth,param_max_leaf_nodes,param_splitter,param_max_features,mean_test_score
+0,1280,1280,best,30,0.7826051226517337
+1,1280,1280,best,40,0.7827001422864777
+2,1280,1280,best,50,0.7826645050745364
+3,1280,1280,best,60,0.7826526321164573
