@@ -1,5 +1,0 @@
-,param_n_neighbors,param_weights,param_metric,param_algorithm,param_leaf_size,mean_test_score
-0,15,distance,euclidean,ball_tree,20,0.7122106588892232
-1,15,distance,euclidean,ball_tree,30,0.7122106588892232
-2,15,distance,euclidean,ball_tree,40,0.7126619857561179
-3,15,distance,euclidean,ball_tree,50,0.7126619857561179

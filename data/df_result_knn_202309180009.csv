@@ -1,9 +1,0 @@
-,param_n_neighbors,param_weights,param_metric,param_algorithm,param_leaf_size,param_p,mean_test_score
-0,15,distance,cityblock,ball_tree,200,1,0.7378053647376389
-1,15,distance,cosine,ball_tree,200,1,
-2,15,distance,euclidean,ball_tree,200,1,0.7123650665891404
-3,15,distance,haversine,ball_tree,200,1,
-4,15,distance,l1,ball_tree,200,1,0.7378053647376389
-5,15,distance,l2,ball_tree,200,1,0.7123650665891404
-6,15,distance,manhattan,ball_tree,200,1,0.7378053647376389
-7,15,distance,nan_euclidean,ball_tree,200,1,

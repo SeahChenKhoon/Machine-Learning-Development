@@ -5,26 +5,9 @@ import datetime
 from sklearn.preprocessing import OrdinalEncoder
 from sklearn.preprocessing import LabelEncoder
 
-data_path=".\data\\"
 
-def read_data():
-    """
-    Perform data retrival of the two datasets and combine them into one.
 
-    Parameters:
-        None.
-    
-    Returns:
-        df_cruise (pd.DataFrame): Returns the combined dataset 
-    """    
-    # Read from Data Source
-    df_cruise_pre =  read_data_from_database(data_path + "cruise_pre.db","cruise_pre")
-    df_cruise_post =  read_data_from_database(data_path + "cruise_post.db","cruise_post","index")
-    df_cruise = pd.merge(df_cruise_pre, df_cruise_post, on='Ext_Intcode', how='inner')
-    df_cruise.set_index("index")
-    return df_cruise
-
-def output_csv (dataframe:pd.DataFrame,dateframe_name:str)->None:
+def output_csv (data_path:str,dataframe:pd.DataFrame,dateframe_name:str)->None:
     """
     This function output a csv from a dataframe and store in data folder
 
@@ -144,26 +127,7 @@ def impute_median(dataframe:pd.DataFrame, col_name)->pd.DataFrame:
     return dataframe
 
 # ******************************
-def read_data_from_database(db_file_path:str, table_name:str, index_col:str=None)->pd.DataFrame:
-    """
-    Read the db file from and return the dataset
 
-    Parameters:
-        db_file_path (str): The filename and path in which the process to read from
-        table_name (str): The table name in which the function to read as
-        
-    Returns:
-        dataframe (pd.DataFrame): Return back the processed dataset
-    """
-    try:
-        connection = sqlite3.connect(db_file_path)
-        df_cruise_pre = pd.read_sql_query("SELECT * FROM " + table_name, connection)
-        if index_col != None:
-            df_cruise_pre = df_cruise_pre.set_index(index_col)
-        return df_cruise_pre
-    except sqlite3.Error as e:
-        print("SQLite error:", e)
-        return None
     
 def remove_duplicates_keeping_last (dataframe:pd.DataFrame, col_name:str,idx_col:str)->None:
     """

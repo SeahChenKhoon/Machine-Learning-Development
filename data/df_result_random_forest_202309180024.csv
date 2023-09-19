@@ -1,4 +1,0 @@
-,param_bootstrap,param_max_depth,param_n_estimators,param_criterion,param_min_samples_split,param_max_features,mean_test_score
-0,False,40,40,gini,5,sqrt,0.8194591265977254
-1,False,40,40,gini,5,log2,0.8196135385294205
-2,False,40,40,gini,5,,0.7182560321524838
