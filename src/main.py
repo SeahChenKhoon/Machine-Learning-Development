@@ -1,17 +1,19 @@
-import data_preprocessing as dp
+import data_preprocessing
 import test
 
 datapath = "./data/"
 
-# Create an instance of the dataprocessing to read cruise_pre.db and cruise_post.db
-data_preprocessing = dp.DataPreprocessing(datapath)
-dataframe = data_preprocessing.read_data()
-# dataframe = data_preprocessing.fix_typo_error(dataframe,"Cruise Name",["blast", "blast0ise", "blastoise"],"Blastoise")
-# dataframe = data_preprocessing.fix_typo_error(dataframe,"Cruise Name",["IAPRAS", "lap", "lapras"],"Lapras")
+# Perform Data Processing
+#   1. Read source Data
+#   2. Correct typo error of Cruise Name 
+dp = data_preprocessing.DataPreprocessing(datapath)
+dataframe = dp.read_data()
+dataframe = dp.fix_typo_error(dataframe,"Cruise Name",["blast", "blast0ise", "blastoise"],"Blastoise")
+dataframe = dp.fix_typo_error(dataframe,"Cruise Name",["IAPRAS", "lap", "lapras"],"Lapras")
+
+print(dataframe["Cruise Name"].head(5))
 
 
-
-# print(dataframe["Cruise Name"].head(5))
 # # Access the public method, which in turn calls the private method
 # output = obj.public_method()
 

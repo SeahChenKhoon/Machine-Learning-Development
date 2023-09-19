@@ -21,8 +21,6 @@ class DataPreprocessing:
         df_cruise = pd.merge(df_cruise_pre, df_cruise_post, on='Ext_Intcode', how='inner')
         return df_cruise
 
-
-
     def _read_data_from_db_file(self, db_file_path:str, table_name:str, index_col:str=None)->pd.DataFrame:
         """
         Read the .db file into a dataset with index column if provided.
@@ -44,5 +42,20 @@ class DataPreprocessing:
             print("SQLite error:", e)
             return None
 
+    def fix_typo_error(self, dataframe:pd.DataFrame, col_name:str, 
+                    replace_list:list, replace_with:str) -> pd.DataFrame:
+        """
+        Perform fixing of typo error list of data (replace_list) to replace_with 
 
+        Parameters:
+            col_name (str) and dataframe (pd.DataFrame): Specify the column name within dataframe for the function perform processing.
+            replace_list (list): List of element to be replace
+            replace_with (str): String to replace the element in replace_list
+
+        Returns:
+            dataframe (pd.DataFrame): Return back the processed dataset 
+        """
+        for word in replace_list:
+            dataframe.loc[dataframe[col_name]==word,col_name] = replace_with
+        return dataframe
 
