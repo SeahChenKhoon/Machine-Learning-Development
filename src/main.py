@@ -5,17 +5,13 @@ datapath = "./data/"
 
 # Perform Data Processing
 #   1. Read source Data
-#   2. Cruise Name - Rectify typo error 
-#   3. Date of Birth - Remove Invalid datetime value  
-#   4. Cruise Distance - Split col into  "UOM", "Distance in KM". Convert Miles to KM in Disances.
-dp = data_preprocessing.DataPreprocessing(datapath)
-dataframe = dp.read_data()
-dataframe = dp.fix_typo_error(dataframe,"Cruise Name",["blast", "blast0ise", "blastoise"],"Blastoise")
-dataframe = dp.fix_typo_error(dataframe,"Cruise Name",["IAPRAS", "lap", "lapras"],"Lapras")
-dataframe = dp.remove_invalid_data_in_datetime_col(dataframe,"Date of Birth")
-dataframe = dp.convert_miles_to_km(dataframe,"Cruise Distance", ["Distance in KM", "UOM"])
-print(dataframe[["Distance in KM"]].head())
-print(dataframe[["Distance in KM"]].info())
+#   2. Date of Birth - Remove Invalid datetime value  
+#   3. Cruise Distance - Split col into  "UOM", "Distance in KM". Convert Miles to KM in Disances.
+read_data = data_preprocessing.ReadData(datapath)
+dataframe = read_data.read_data()
+data_preprocessing = data_preprocessing.DataPreprocessing()
+dataframe = data_preprocessing.process_data_preprocessing(dataframe)
+
 
 
 # # Access the public method, which in turn calls the private method

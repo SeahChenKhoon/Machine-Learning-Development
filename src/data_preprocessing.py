@@ -1,25 +1,10 @@
 import sqlite3
+import datetime
 import pandas as pd
 
-class DataPreprocessing:
+class ReadData:
     def __init__(self, datapath):
-        self.datapath = datapath
-
-    def read_data(self)->pd.DataFrame:
-        """
-        Perform the following:
-        * Read pre-cruise data into df_cruise_pre dataset
-        * Read post-cruise data into df_cruise_post dataset
-        * Combine both pre-cruise and post-cruise dataset together 
-        Parameters:
-            None
-        Returns:
-            df_cruise (pd.DataFrame): Return back the combined datasets of pre-cruise and post-cruise
-        """
-        df_cruise_pre =  self._read_data_from_db_file(self.datapath, "cruise_pre","index")
-        df_cruise_post =  self._read_data_from_db_file(self.datapath, "cruise_post","index")
-        df_cruise = pd.merge(df_cruise_pre, df_cruise_post, on='Ext_Intcode', how='inner')
-        return df_cruise
+        self._datapath = datapath
 
     def _read_data_from_db_file(self, db_file_path:str, table_name:str, index_col:str=None)->pd.DataFrame:
         """
@@ -42,24 +27,95 @@ class DataPreprocessing:
             print("SQLite error:", e)
             return None
 
-    def fix_typo_error(self, dataframe:pd.DataFrame, col_name:str, 
-                    replace_list:list, replace_with:str) -> pd.DataFrame:
+    def read_data(self)->pd.DataFrame:
         """
-        Perform fixing of typo error list of data (replace_list) to replace_with 
+        Perform the following:
+        * Read pre-cruise data into df_cruise_pre dataset
+        * Read post-cruise data into df_cruise_post dataset
+        * Combine both pre-cruise and post-cruise dataset together 
+        Parameters:
+            None
+        Returns:
+            df_cruise (pd.DataFrame): Return back the combined datasets of pre-cruise and post-cruise
+        """
+        df_cruise_pre =  self._read_data_from_db_file(self._datapath, "cruise_pre","index")
+        df_cruise_post =  self._read_data_from_db_file(self._datapath, "cruise_post","index")
+        df_cruise = pd.merge(df_cruise_pre, df_cruise_post, on='Ext_Intcode', how='inner')
+        return df_cruise
+
+
+class DataPreprocessing:
+    def process_data_preprocessing (self, dataframe:pd.DataFrame)->pd.DataFrame:
+        """
+        This function carries out preprocessing by 
+        1> Date of Birth - Remove invalid_data=
+        2> Cruise Distance - Convert Miles to KM 
+        3> Ticket Type  - Remove rows with missing data
+
+        Parameters:
+            dataframe (pd.DataFrame): Specify the column name within dataframe for the function perform processing.
+            
+        Returns:
+            dataframe (pd.DataFrame): Return back the processed dataset
+        """
+        dataframe = self._remove_invalid_data_in_datetime_col(dataframe,"Date of Birth")
+        dataframe = self._convert_miles_to_km(dataframe)
+        dataframe = self._remove_rows_with_missing_data(dataframe,"Ticket Type")
+        dataframe = self._convert_DOB_to_age(dataframe,"Date of Birth")
+        return dataframe
+    
+    def _convert_DOB_to_age(self, dataframe:pd.DataFrame, col_name:str)->pd.DataFrame:
+        """
+        Convert DOB to additional Age column
+
+		Parameters:
+			col_name (str) and dataframe (pd.DataFrame): Specify the column name within dataframe for the function perform processing.
+
+		Returns:
+			dataframe (pd.DataFrame): Return back the processed dataset
+        """
+        current_year = datetime.datetime.now().year
+        dataframe["Age"] = current_year - dataframe[col_name].dt.year
+        return dataframe
+
+
+    def _remove_rows_with_missing_data (self, dataframe:pd.DataFrame, col_name:str)->pd.DataFrame:
+        """
+        This function will remove all rows with missing data on the specific col_name within the dataframe
 
         Parameters:
             col_name (str) and dataframe (pd.DataFrame): Specify the column name within dataframe for the function perform processing.
-            replace_list (list): List of element to be replace
-            replace_with (str): String to replace the element in replace_list
-
+            
         Returns:
-            dataframe (pd.DataFrame): Return back the processed dataset 
+            dataframe (pd.DataFrame): Return back the processed dataset
         """
-        for word in replace_list:
-            dataframe.loc[dataframe[col_name]==word,col_name] = replace_with
+        dataframe.dropna(subset=[col_name], inplace=True)
         return dataframe
 
-    def remove_invalid_data_in_datetime_col (self, dataframe:pd.DataFrame, column_name:str)->pd.DataFrame:
+    def _convert_miles_to_km(self, dataframe:pd.DataFrame)->pd.DataFrame:
+        """
+        This function performs the standardisation of UOM in Cruise Distance:
+            1> Strip the distance away from the unit into 2 new columns "Distance" and "UOM". 
+            2> Convert the distance into KM into "Distance in KM"
+            3> Drop "Cruise Distance" and "UOM" columns from dataset
+        Parameters:
+            col_name (str) and dataframe (pd.DataFrame): Specify the column name within dataframe for the function perform processing.
+            
+        Returns:
+            dataframe (pd.DataFrame):         
+        """
+        dataframe[["Distance in KM", "UOM"]] = dataframe["Cruise Distance"].str.split(pat=' ', n=1, expand=True)
+        self._convert_datatype_object_to_numeric_col(dataframe,'Distance in KM')
+
+        # 2> Convert the distance into KM.
+        dataframe.loc[dataframe["UOM"]== "Miles","Distance in KM"] = dataframe["Distance in KM"] * 1.60934
+        
+        # 3> Drop "Cruise Distance" and "UOM" columns from dataset
+        dataframe = self._drop_column(dataframe, ["UOM","Cruise Distance"])
+
+        return dataframe
+    
+    def _remove_invalid_data_in_datetime_col (self, dataframe:pd.DataFrame, column_name:str)->pd.DataFrame:
         """
         This function removes all rows that have invalid datetime give the dataframe and column name
 
@@ -78,57 +134,29 @@ class DataPreprocessing:
             print(f"Column '{column_name}' does not contain valid 'DD/MM/YYYY' dates.")
         return dataframe
 
-    def convert_datatype_object_to_numeric_col (self, dataframe: pd.DataFrame, feature: str)->pd.Series:
+    def _convert_datatype_object_to_numeric_col (self,dataframe: pd.DataFrame, feature: str)->pd.Series:
         """
-        Summary:
-            This function convert the specific variable column from Object to Numeric Data Type
-        """
-        dataframe[feature] = pd.to_numeric(dataframe[feature], errors='coerce')
+        Convert the specific variable column from Object to Numeric Data Type
 
-    def convert_miles_to_km(self, dataframe:pd.DataFrame, col_name:str, new_fields: list)->pd.DataFrame:
-        """
-        This function performs the standardisation of UOM in Cruise Distance:
-            1> Strip the distance away from the unit into 2 new columns "Distance" and "UOM". 
-            2> Convert the distance into KM into "Distance in KM"
-            3> Drop "Cruise Distance" and "UOM" columns from dataset
         Parameters:
             col_name (str) and dataframe (pd.DataFrame): Specify the column name within dataframe for the function perform processing.
             
         Returns:
-            dataframe (pd.DataFrame):         
+            dataframe (pd.DataFrame): Return back the processed dataset
         """
-        dataframe[new_fields] = dataframe[col_name].str.split(pat=' ', n=1, expand=True)
-        self.convert_datatype_object_to_numeric_col(dataframe,new_fields[0])
+        dataframe[feature] = pd.to_numeric(dataframe[feature], errors='coerce')
 
-        # 2> Convert the distance into KM.
-        conversion_factors = {'Miles': 1.60934, 'KM': 1.0}
-        dataframe[new_fields[0]] = abs(round(dataframe[new_fields[0]] * dataframe[new_fields[1]].map(conversion_factors),0))
-        
-        # 3> Drop "Cruise Distance" and "UOM" columns from dataset
-        dataframe.drop(new_fields[1],axis=1,inplace=True)
-        dataframe.drop(col_name,axis=1,inplace=True)    
-        return dataframe
-        
-    def convert_miles_to_km_dummy(self, dataframe:pd.DataFrame, col_name:str)->None:
+    def _drop_column(self, dataframe: pd.DataFrame, col_names: list)->pd.DataFrame:
         """
-            This function performs the following using the column_name and dataframe:
-            1> Strip the distance away from the unit into 2 new columns "Distance" and "UOM". 
-            2> Convert the distance into KM into "Distance in KM"
-            3> Drop "Cruise Distance" and "UOM" columns from dataset
+        Perform Removal duplicate records while retaining the last occurrence..
+
         Parameters:
-            col_name (str) and dataframe (pd.DataFrame): 
-            Specify the column name within dataframe for the function perform processing.
+            col_names (list) and dataframe (pd.DataFrame): Specify the column names within dataframe for the function perform processing.
             
         Returns:
-            dataframe (pd.DataFrame): 
+            dataframe (pd.DataFrame): Return back the processed dataset
         """
-        # 1> Strip the distance away from the unit into 2 new columns "Distance" and "UOM"
-        dataframe[["Distance", "UOM"]] = dataframe["Cruise Distance"].str.split(pat=' ', n=1, expand=True)
-        # convert_text_to_numeric_col(dataframe,'Distance')
-        # # 2> Convert the distance into KM.
-        # conversion_factors = {'Miles': 1.60934, 'KM': 1.0}
-        # dataframe['Distance in KM'] = abs(round(dataframe['Distance'] * dataframe['UOM'].map(conversion_factors),0))
-        # dataframe.drop("Distance",axis=1,inplace=True)
-        # dataframe.drop("UOM",axis=1,inplace=True)
-        # dataframe.drop("Cruise Distance",axis=1,inplace=True)    
+        for col_name in col_names:
+            dataframe.drop(col_name,axis=1,inplace=True)
         return dataframe
+
