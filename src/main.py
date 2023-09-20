@@ -1,7 +1,7 @@
 import data_preprocessing
 import feature_engineering
 
-datapath = "./data/"
+datapath = "../data/"
 
 # Perform Data Processing
 #   1. Read source Data
@@ -11,11 +11,9 @@ read_data = data_preprocessing.ReadData(datapath)
 dataframe = read_data.read_data()
 data_preprocessing = data_preprocessing.DataPreprocessing()
 dataframe = data_preprocessing.process_data_preprocessing(dataframe)
-fe = feature_engineering.ImputeMissingValue()
+fe = feature_engineering.Feature_Engineering()
 dataframe = fe.impute_missing_data(dataframe)
-
-
-
+dataframe = fe.convert_features_to_numeric(dataframe)
 
 # # Access the public method, which in turn calls the private method
 # output = obj.public_method()
