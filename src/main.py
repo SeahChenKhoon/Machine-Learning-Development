@@ -15,20 +15,3 @@ fe = feature_engineering.Feature_Engineering()
 dataframe = fe.impute_missing_data(dataframe)
 dataframe = fe.convert_features_to_numeric(dataframe)
 
-# # Access the public method, which in turn calls the private method
-# output = obj.public_method()
-
-# # Print the result
-# print(output)  # Output: The result is 10
-
-# import util
-# import model
-# import feature_engineering
-# data_preprocessing = DataPreprocessing.read_data()
-# dataframe = data_preprocessing.read_data()
-# print(dataframe.head(5))
-# dataframe = feature_engineering.convert_columns_to_numeric(dataframe)
-# dataframe = feature_engineering.impute_missing_data(dataframe)
-# model.training_model(dataframe)
-# util.output_csv(dataframe,"df_cruise_final")
-
