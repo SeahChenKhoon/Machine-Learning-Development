@@ -1,7 +1,7 @@
 import data_preprocessing
 import feature_engineering
 
-datapath = "../data/"
+datapath = "./data/"
 
 # Perform Data Processing
 #   1. Read source Data
