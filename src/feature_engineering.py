@@ -7,7 +7,9 @@ class FeatureEngineer:
 
     def process_impute_missing_data(self)->pd.DataFrame:
         impute_median = impute_missing_data.ImputeMedian(self._dataframe, ["Age"])
-        self._dataframe = impute_median.process_impute()
+        self._dataframe = self._dataframe = impute_median.process_impute()
+        impute_mean = impute_missing_data.ImputeMean(self._dataframe, ["Distance in KM"])
+        self._dataframe = dataframe= impute_mean.process_impute()
         # impute_missing_data = impute_missing_data.ImputeMissingData(self._dataframe,["Age"],col_names)
 
 
