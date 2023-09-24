@@ -11,7 +11,10 @@ class FeatureEngineer:
         impute_mean = impute_missing_data.ImputeMean(self._dataframe, ["Distance in KM"])
         self._dataframe = impute_mean.process_impute()
         impute_mode = impute_missing_data.ImputeMode(self._dataframe, ["Age"])
-        self._dataframe = impute_mode.process_impute()        
+        self._dataframe = impute_mode.process_impute()
+        impute_random = impute_missing_data.ImputeRandom(self._dataframe, ["Gender"])
+        self._dataframe = impute_random.process_impute()
+        return self._dataframe
         # impute_missing_data = impute_missing_data.ImputeMissingData(self._dataframe,["Age"],col_names)
 
 

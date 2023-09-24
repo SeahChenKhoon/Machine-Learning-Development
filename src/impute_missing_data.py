@@ -7,6 +7,34 @@ class ImputeMissingData:
         self._feature_list = feature_list
         self._add_mark_col = False
 
+class ImputeRandom(ImputeMissingData):
+    def process_impute(self):
+        """
+        Process imputation of random on missing data
+
+        Parameters:
+            None
+        """
+        for feature in self._feature_list:
+            self._impute_random(feature)
+        return self._dataframe
+    
+    def _impute_random(self,col_name:str)->pd.DataFrame:
+        """
+        Perform Imputation of specific column in dataset to random
+
+		Parameters:
+			col_name (str): Specify the column name within dataframe for the function perform processing.
+			
+		Returns:
+			dataframe (pd.DataFrame): Return back the processed dataset
+        """
+        if self._add_mark_col:
+            self._dataframe[col_name + "_random"] = np.where(self._dataframe[col_name].isnull(),1,0)
+        random_values = self._dataframe[col_name].dropna().sample(self._dataframe[col_name].isna().sum(), replace=True).values
+        self._dataframe.loc[self._dataframe[col_name].isna(), col_name] = random_values
+        return self._dataframe
+    
 class ImputeMode(ImputeMissingData):
     def process_impute(self):
         """
@@ -30,7 +58,7 @@ class ImputeMode(ImputeMissingData):
 			dataframe (pd.DataFrame): Return back the processed dataset
         """
         if self._add_mark_col:
-            self._dataframe[col_name + "_mean"] = np.where(self._dataframe[col_name].isnull(),1,0)
+            self._dataframe[col_name + "_mode"] = np.where(self._dataframe[col_name].isnull(),1,0)
         self._dataframe[col_name] = self._dataframe[col_name].fillna(int(self._dataframe[col_name].mode()))
         return self._dataframe        
 
