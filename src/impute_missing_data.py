@@ -7,6 +7,33 @@ class ImputeMissingData:
         self._feature_list = feature_list
         self._add_mark_col = False
 
+class ImputeMode(ImputeMissingData):
+    def process_impute(self):
+        """
+        Process imputation of mode on missing data
+
+        Parameters:
+            None
+        """
+        for feature in self._feature_list:
+            self._impute_mode(feature)
+        return self._dataframe
+    
+    def _impute_mode(self,col_name:str)->pd.DataFrame:
+        """
+        Perform Imputation of specific column in dataset to mode
+
+		Parameters:
+			col_name (str): Specify the column name within dataframe for the function perform processing.
+			
+		Returns:
+			dataframe (pd.DataFrame): Return back the processed dataset
+        """
+        if self._add_mark_col:
+            self._dataframe[col_name + "_mean"] = np.where(self._dataframe[col_name].isnull(),1,0)
+        self._dataframe[col_name] = self._dataframe[col_name].fillna(int(self._dataframe[col_name].mode()))
+        return self._dataframe        
+
 class ImputeMean(ImputeMissingData):
     def process_impute(self):
         """
