@@ -27,6 +27,14 @@ class FeatureEngineer:
         """
         self._dataframe = self._fix_typo_error("Cruise Name",["blast", "blast0ise", "blastoise"],"Blastoise")
         self._dataframe = self._fix_typo_error("Cruise Name",["IAPRAS", "lap", "lapras"],"Lapras")
+        self._dataframe = self._fix_typo_error("Embarkation/Disembarkation time convenient",[0],None)
+        self._dataframe = self._fix_typo_error("Ease of Online booking",[0],None)
+        self._dataframe = self._fix_typo_error("Gate location",[0],None)
+        self._dataframe = self._fix_typo_error("Online Check-in",[0],None)
+        self._dataframe = self._fix_typo_error("Cabin Comfort",[0],None)
+        self._dataframe = self._fix_typo_error("Cabin service",[0],None)
+        self._dataframe = self._fix_typo_error("Onboard Service",[0],None)
+        self._dataframe = self._fix_typo_error("Cleanliness",[0],None)
 
     def _fix_typo_error(self, col_name:str, replace_list:list, replace_with:str) -> pd.DataFrame:
         """
