@@ -49,17 +49,35 @@ class FeatureEngineer:
         self._dataframe = self._dataframe = impute_median.process_impute()
         impute_mean = impute_missing_data.ImputeMean(self._dataframe, ["Distance in KM"])
         self._dataframe = impute_mean.process_impute()
+        impute_pred = impute_missing_data.ImputeUsingPred(self._dataframe,["Baggage handling", "Cabin service"])
+        impute_pred.process_impute("Onboard Service")
+        impute_pred = impute_missing_data.ImputeUsingPred(self._dataframe,["Cleanliness"])
+        impute_pred.process_impute("Cabin service")
+        impute_pred = impute_missing_data.ImputeUsingPred(self._dataframe,["Cabin service","Onboard Service"])
+        impute_pred.process_impute("Baggage handling")
+
+        impute_pred = impute_missing_data.ImputeUsingPred(self._dataframe,["Cabin Comfort","Online Check-in"])
+        impute_pred.process_impute("Cleanliness")
+        impute_pred = impute_missing_data.ImputeUsingPred(self._dataframe,["Cleanliness","Online Check-in"])
+        impute_pred.process_impute("Cabin Comfort")
+        impute_pred = impute_missing_data.ImputeUsingPred(self._dataframe,["Ease of Online booking","Cleanliness","Cabin Comfort"])
+        impute_pred.process_impute("Online Check-in")
+        impute_pred = impute_missing_data.ImputeUsingPred(self._dataframe,["Ease of Online booking","Gate location"])
+        impute_pred.process_impute("Embarkation/Disembarkation time convenient")
+        impute_pred = impute_missing_data.ImputeUsingPred(self._dataframe,["Embarkation/Disembarkation time convenient",
+                                                                           "Gate location","Online Check-in"])
+        impute_pred.process_impute("Ease of Online booking")
+        impute_pred = impute_missing_data.ImputeUsingPred(self._dataframe,["Embarkation/Disembarkation time convenient",
+                                                                           "Ease of Online booking"])
+        impute_pred.process_impute("Gate location")
         impute_mode = impute_missing_data.ImputeMode(self._dataframe, ["Onboard Wifi Service", 
                                                                         "Embarkation/Disembarkation time convenient", 
                                                                         "Ease of Online booking","Gate location",
                                                                         "Onboard Dining Service", "Cabin Comfort",
-                                                                        "Online Check-in","Onboard Entertainment",
-                                                                        "Cabin service", "Baggage handling","Port Check-in Service",
-                                                                        "Onboard Service", "Cleanliness"])
+                                                                        "Online Check-in","Onboard Entertainment","Cabin service",
+                                                                        "Baggage handling","Port Check-in Service",
+                                                                        "Onboard Service", "Cleanliness","Gender","Cruise Name"])
         self._dataframe = impute_mode.process_impute()
-        impute_random = impute_missing_data.ImputeRandom(self._dataframe, ["Gender","Cruise Name"])
-        self._dataframe = impute_random.process_impute()
-
         return self._dataframe
     
     def convert_features_to_numeric(self)->pd.DataFrame:

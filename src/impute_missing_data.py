@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+import modelling
+from sklearn.impute import SimpleImputer
 
 class ImputeMissingData:
     def __init__(self, dataframe:pd.DataFrame, feature_list:list)->None:
@@ -34,7 +36,24 @@ class ImputeRandom(ImputeMissingData):
         random_values = self._dataframe[col_name].dropna().sample(self._dataframe[col_name].isna().sum(), replace=True).values
         self._dataframe.loc[self._dataframe[col_name].isna(), col_name] = random_values
         return self._dataframe
-    
+
+class ImputeUsingPred(ImputeMissingData):
+    def process_impute(self, target_col: str):
+        dataframe = self._dataframe
+        dataframe1 = dataframe.copy()
+        impute_mode = ImputeMode(dataframe1,self._feature_list)
+        dataframe1 = impute_mode.process_impute()
+        X = dataframe1[self._feature_list]
+        y = dataframe1[target_col]
+        X_train = X[y.notna()]
+        y_train = y[y.notna()]
+        random_forest_classifier = modelling.RandomForestClassify(dataframe1,target_col,None)
+        model = random_forest_classifier.model()
+        X_impute = X[y.isna()]
+        predicted_col_a  = random_forest_classifier.train_impute_model(model,X_train, y_train,X_impute)
+        self._dataframe.loc[y.isna(), target_col] = predicted_col_a
+        return self._dataframe
+
 class ImputeMode(ImputeMissingData):
     def process_impute(self):
         """
