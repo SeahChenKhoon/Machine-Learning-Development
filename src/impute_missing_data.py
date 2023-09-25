@@ -78,8 +78,8 @@ class ImputeMode(ImputeMissingData):
         """
         if self._add_mark_col:
             self._dataframe[col_name + "_mode"] = np.where(self._dataframe[col_name].isnull(),1,0)
-        self._dataframe[col_name] = self._dataframe[col_name].fillna(int(self._dataframe[col_name].mode()))
-        return self._dataframe        
+        self._dataframe[col_name] = self._dataframe[col_name].fillna(self._dataframe[col_name].mode())
+        return self._dataframe
 
 class ImputeMean(ImputeMissingData):
     def process_impute(self):
