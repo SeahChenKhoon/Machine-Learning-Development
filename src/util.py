@@ -22,6 +22,14 @@ def output_csv (data_path:str,dataframe:pd.DataFrame,dateframe_name:str)->None:
     filename = f"{data_path}{dateframe_name}_{timestamp}.csv"
     dataframe.to_csv(filename)
 
+def drop_column(dataframe:pd.DataFrame, col_names:list)->pd.DataFrame:
+    """
+    Drop colum
+    """
+    for col_name in col_names:
+        dataframe.drop(col_name, axis=1,inplace=True)
+    return dataframe
+
 # def convert_object_to_datetime(dataframe: pd.DataFrame, col_name:str)-> pd.DataFrame:
 #     """
 #         This function process the Date of Birth by

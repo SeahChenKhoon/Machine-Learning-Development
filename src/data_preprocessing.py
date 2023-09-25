@@ -1,5 +1,6 @@
 import sqlite3
 import datetime
+import util
 import pandas as pd
 
 class ReadData:
@@ -76,6 +77,7 @@ class DataPreprocessing:
         """
         current_year = datetime.datetime.now().year
         dataframe["Age"] = current_year - dataframe[col_name].dt.year
+        util.drop_column(dataframe, ["Date of Birth"])
         return dataframe
 
 
