@@ -37,9 +37,8 @@ class Ordinal_Encode(ConvertToNumeric):
         Ordinally encodes a specified column in a DataFrame.
 
         Parameters:
-            dataframe (pd.DataFrame): The DataFrame containing the column to encode.
-            column_name (str): The name of the column to encode.
-            categories_order (list): A list of categories in the desired order.
+            list_column (list): The name of the columns to encode.
+            impt_order (list): A list of categories in the desired order.
 
         Returns:
             pd.DataFrame: The DataFrame with the specified column ordinally encoded.
@@ -53,11 +52,30 @@ class Ordinal_Encode(ConvertToNumeric):
 
 class LabelEncode(ConvertToNumeric):
     def process_conversion(self, col_name):
+        """
+        This function process the label encoding on the target column which is Ticket Type
+        
+        Parameters:
+            col_name (str): Specify the column name within dataframe for the function perform processing.
+            
+        Returns:
+            dataframe (pd.DataFrame): Return back the processed dataset
+        """
         label_encoder = LabelEncoder()
         self._dataframe[col_name] = label_encoder.fit_transform(self._dataframe[col_name])
         return self._dataframe
 
 class OneHotKeyEncode(ConvertToNumeric):
     def process_conversion(self, col_name):
+        """
+        This function process the one hot key encoding on the following column
+        a> Source of Traffic
+
+        Parameters:
+            col_name ( list): Specify the column name within dataframe for the function perform processing.
+
+        Returns:
+            dataframe (pd.DataFrame): Return back the processed dataset    
+        """
         encoded_df = pd.get_dummies(self._dataframe, columns=col_name)
         return encoded_df
