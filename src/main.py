@@ -4,6 +4,8 @@ import util
 import numpy as np
 import modelling
 from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split, cross_val_score
 datapath = "./data/"
 
@@ -31,12 +33,20 @@ x = dataframe.drop(["Ticket Type"], axis=1)
 y = dataframe["Ticket Type"]
 x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.25, random_state=42)
 
+# minmax_scale = MinMaxScaler()
+# minmax_scale.fit(x_train)
+# x_train = minmax_scale.transform(x_train)
+
+# std_scale = StandardScaler()
+# std_scale.fit(x_train)
+# x_train = std_scale.transform(x_train)
+
 logistic_regression = LogisticRegression(max_iter=5000)
 logistic_regression.fit(x_train,y_train)
 
 accuracy = logistic_regression.score(x_train, y_train)
 print(f"accuracy: {accuracy}")
-score = cross_val_score(logistic_regression, x, y, cv=5)
-cv_score = np.mean(score)
-print(f"cv_score: {cv_score}")
+# score = cross_val_score(logistic_regression, x, y, cv=5)
+# cv_score = np.mean(score)
+# print(f"cv_score: {cv_score}")
 
