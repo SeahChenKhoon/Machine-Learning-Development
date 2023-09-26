@@ -29,9 +29,11 @@ util.output_csv(datapath,dataframe,"TheEnd")
 # print(f"cv_score: {cv_score}")
 x = dataframe.drop(["Ticket Type"], axis=1)
 y = dataframe["Ticket Type"]
-logistic_regression = LogisticRegression(max_iter=5000)
 x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.25, random_state=42)
+
+logistic_regression = LogisticRegression(max_iter=5000)
 logistic_regression.fit(x_train,y_train)
+
 accuracy = logistic_regression.score(x_train, y_train)
 print(f"accuracy: {accuracy}")
 score = cross_val_score(logistic_regression, x, y, cv=5)
