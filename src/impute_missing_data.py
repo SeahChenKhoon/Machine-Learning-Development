@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import modelling
-from sklearn.impute import SimpleImputer
+from sklearn.linear_model import LogisticRegression
 
 class ImputeMissingData:
     def __init__(self, dataframe:pd.DataFrame, feature_list:list)->None:
@@ -47,10 +47,16 @@ class ImputeUsingPred(ImputeMissingData):
         y = dataframe1[target_col]
         X_train = X[y.notna()]
         y_train = y[y.notna()]
-        random_forest_classifier = modelling.RandomForestClassify(dataframe1,target_col,None)
-        model = random_forest_classifier.model()
+        # random_forest_classifier = modelling.RandomForestClassify(dataframe1,target_col,None)
+        # model = random_forest_classifier.model()
+        logistic_regression = LogisticRegression(max_iter=1000)
+        logistic_regression.fit(X_train,y_train)
+        # logistic_regression = modelling.LogisticRegression(dataframe1,target_col,None)
+        # model = logistic_regression.model()
+        # model = LogisticRegression(max_iter=1000)
         X_impute = X[y.isna()]
-        predicted_col_a  = random_forest_classifier.train_impute_model(model,X_train, y_train,X_impute)
+        predicted_col_a = logistic_regression.predict(X_impute)
+        # predicted_col_a  = logistic_regression.train_impute_model(model,X_train, y_train,X_impute)
         self._dataframe.loc[y.isna(), target_col] = predicted_col_a
         return self._dataframe
 

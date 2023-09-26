@@ -114,7 +114,7 @@ class DataPreprocessing:
         temp_dist = dataframe[(~dataframe["Distance"].isna())][["Distance","UOM"]]
         temp_dist["Distance in KM"] = pd.to_numeric(temp_dist['Distance'], errors='coerce')
         temp_dist.loc[temp_dist["UOM"]== "Miles","Distance in KM"] = temp_dist["Distance in KM"] * 1.60934
-        temp_dist["Distance in KM"] = temp_dist["Distance in KM"].round(0)
+        temp_dist["Distance in KM"] = temp_dist["Distance in KM"].abs().round(0)
         temp_dist['Distance in KM'] = temp_dist['Distance in KM'].astype(int)
 
         dataframe.loc[~dataframe["Distance"].isnull(),"Distance in KM"] =  temp_dist["Distance in KM"]
