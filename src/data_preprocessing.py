@@ -112,19 +112,12 @@ class DataPreprocessing:
         # Store numeric dataframe["Distance"] into a temporarily dataframe temp_dist["Distance in KM"] and then
         # convert to KM
         temp_dist = dataframe[(~dataframe["Distance"].isna())][["Distance","UOM"]]
-        # print(f"hello 1: {temp_dist.info()}")
         temp_dist["Distance in KM"] = pd.to_numeric(temp_dist['Distance'], errors='coerce')
-        # print(f"hello 2: {temp_dist.info()}")
         temp_dist.loc[temp_dist["UOM"]== "Miles","Distance in KM"] = temp_dist["Distance in KM"] * 1.60934
-        # print(f"hello 3: {temp_dist.info()}")
         temp_dist["Distance in KM"] = temp_dist["Distance in KM"].round(0)
-        # print(f"hello 4: {temp_dist.info()}")
         temp_dist['Distance in KM'] = temp_dist['Distance in KM'].astype(int)
-        # print(f"hello 5: {temp_dist.info()}")
 
-        # print(f"hello A: {dataframe.info()}")
         dataframe.loc[~dataframe["Distance"].isnull(),"Distance in KM"] =  temp_dist["Distance in KM"]
-        # print(f"hello B: {dataframe.info()}")
         
         # 3> Drop "Cruise Distance" and "UOM" columns from dataset
         dataframe = self._drop_column(dataframe, ["UOM","Cruise Distance","Distance"])
