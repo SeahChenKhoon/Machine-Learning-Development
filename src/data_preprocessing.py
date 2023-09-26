@@ -77,7 +77,7 @@ class DataPreprocessing:
         """
         current_year = datetime.datetime.now().year
         dataframe["Age"] = current_year - dataframe[col_name].dt.year
-        util.drop_column(dataframe, ["Date of Birth"])
+        self._drop_column(dataframe, ["Date of Birth"])
         return dataframe
 
 
@@ -106,14 +106,28 @@ class DataPreprocessing:
         Returns:
             dataframe (pd.DataFrame):         
         """
-        dataframe[["Distance in KM", "UOM"]] = dataframe["Cruise Distance"].str.split(pat=' ', n=1, expand=True)
-        self._convert_datatype_object_to_numeric_col(dataframe,'Distance in KM')
+        # Split "Cruise Distance" into "Distance", "UOM" storing distance and and KM/Miles respectively
+        dataframe[["Distance", "UOM"]] = dataframe["Cruise Distance"].str.split(pat=' ', n=1, expand=True)
 
-        # 2> Convert the distance into KM.
-        dataframe.loc[dataframe["UOM"]== "Miles","Distance in KM"] = dataframe["Distance in KM"] * 1.60934
+        # Store numeric dataframe["Distance"] into a temporarily dataframe temp_dist["Distance in KM"] and then
+        # convert to KM
+        temp_dist = dataframe[(~dataframe["Distance"].isna())][["Distance","UOM"]]
+        # print(f"hello 1: {temp_dist.info()}")
+        temp_dist["Distance in KM"] = pd.to_numeric(temp_dist['Distance'], errors='coerce')
+        # print(f"hello 2: {temp_dist.info()}")
+        temp_dist.loc[temp_dist["UOM"]== "Miles","Distance in KM"] = temp_dist["Distance in KM"] * 1.60934
+        # print(f"hello 3: {temp_dist.info()}")
+        temp_dist["Distance in KM"] = temp_dist["Distance in KM"].round(0)
+        # print(f"hello 4: {temp_dist.info()}")
+        temp_dist['Distance in KM'] = temp_dist['Distance in KM'].astype(int)
+        # print(f"hello 5: {temp_dist.info()}")
+
+        # print(f"hello A: {dataframe.info()}")
+        dataframe.loc[~dataframe["Distance"].isnull(),"Distance in KM"] =  temp_dist["Distance in KM"]
+        # print(f"hello B: {dataframe.info()}")
         
         # 3> Drop "Cruise Distance" and "UOM" columns from dataset
-        dataframe = self._drop_column(dataframe, ["UOM","Cruise Distance"])
+        dataframe = self._drop_column(dataframe, ["UOM","Cruise Distance","Distance"])
 
         return dataframe
     
@@ -147,6 +161,9 @@ class DataPreprocessing:
             dataframe (pd.DataFrame): Return back the processed dataset
         """
         dataframe[feature] = pd.to_numeric(dataframe[feature], errors='coerce')
+        util.output_csv("./data/",dataframe, "SeeNonNumeric")
+        print(dataframe["Distance in KM"].head())
+        # dataframe[feature] = dataframe[feature].astype(float)
 
     def _drop_column(self, dataframe: pd.DataFrame, col_names: list)->pd.DataFrame:
         """
@@ -158,7 +175,7 @@ class DataPreprocessing:
         Returns:
             dataframe (pd.DataFrame): Return back the processed dataset
         """
-        for col_name in col_names:
-            dataframe.drop(col_name,axis=1,inplace=True)
+        dataframe.drop(columns=col_names, inplace=True)
         return dataframe
+
 
