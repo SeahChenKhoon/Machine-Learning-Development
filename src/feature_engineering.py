@@ -16,6 +16,23 @@ class FeatureEngineer:
         self._dataframe = util.drop_column(self._dataframe,ID_cols)
         return self._dataframe
 
+    def drop_duplicate_rows(self) -> pd.DataFrame:
+        """
+        Perform Removal duplicate records while retaining the last occurrence..
+
+        Parameters:
+            dataframe (pd.DataFrame): The DataFrame containing the column from which duplicates should be removed.
+            col_name (str): The name of the column within the DataFrame from which duplicates should be removed..
+
+        Returns:
+            dataframe (pd.DataFrame): Return back the processed dataset
+        """
+        self._dataframe.reset_index(inplace=True)
+        all_dup_idx = set(self._dataframe["index"].loc[self._dataframe.duplicated(subset=["Ext_Intcode"], keep=False)])
+        last_dup_idx = set(self._dataframe["index"].loc[self._dataframe.duplicated(subset=["Ext_Intcode"], keep="first")])
+        dup_idx_to_remove = all_dup_idx.symmetric_difference(last_dup_idx)
+        return self._dataframe
+
     def fix_typo_error(self)-> pd.DataFrame:
         """
         Perform fixing of typo error list by calling the _fix_typo_error
