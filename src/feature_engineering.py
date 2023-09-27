@@ -57,6 +57,7 @@ class FeatureEngineer:
         self._dataframe = self._dataframe = impute_median.process_impute()
         impute_mean = impute_missing_data.ImputeMean(self._dataframe, ["Distance in KM"])
         self._dataframe = impute_mean.process_impute()
+
         impute_pred = impute_missing_data.ImputeUsingPred(self._dataframe,["Cabin service","Onboard Service"])
         impute_pred.process_impute("Baggage handling")
         impute_pred = impute_missing_data.ImputeUsingPred(self._dataframe,["Cleanliness","Online Check-in"])
