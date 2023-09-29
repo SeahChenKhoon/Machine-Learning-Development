@@ -43,7 +43,7 @@ y = dataframe["Ticket Type"]
 # pca = PCA(n_components=i)
 # X_pca = pca.fit_transform(x)
 
-x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.25, random_state=42)
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.25, random_state=1)
 
 ###################
 # Standard Scaler #
@@ -62,7 +62,7 @@ x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.25, random
 
 models={
     "Random Forest": RandomForestClassifier(),
-    "Logistic Regression":LogisticRegression(),
+    "Logistic Regression":LogisticRegression(max_iter=5000),
     "Decision Tree": DecisionTreeClassifier()
 }
 
