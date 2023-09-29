@@ -8,6 +8,27 @@ class FeatureEngineer:
     def __init__(self, dataframe:pd.DataFrame)->None:
         self._dataframe = dataframe
 
+    def remove_outlier(self)->pd.DataFrame:
+        """
+        Perform removal of outliers record
+
+        Parameters:
+            col_names (list): Specify the column names within dataframe for checking and removal of outliers.
+
+        Returns:
+            dataframe (pd.DataFrame): Return back the processed dataset
+        """
+        print(f"Before: {len(self._dataframe)}")
+        for feature in ["Age","Distance in KM"]:
+            Q1 = self._dataframe[feature].quantile(0.25)
+            Q3 = self._dataframe[feature].quantile(0.75)
+            IQR = Q3 - Q1
+            lower_limit = Q1 - 1.5 * IQR
+            upper_limit = Q3 + 1.5 * IQR
+            self._dataframe = self._dataframe[(self._dataframe[feature] > lower_limit) & (self._dataframe[feature] < upper_limit)]
+        print(f"After: {len(self._dataframe)}")
+        return self._dataframe
+
     def drop_ID_cols(self) -> pd.DataFrame:
         """
         Perform the dropping of ID columns

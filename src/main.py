@@ -3,6 +3,7 @@ import feature_engineering
 import util
 import numpy as np
 import modelling
+import warnings
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
@@ -21,6 +22,7 @@ datapath = "./data/"
 #   1. Read source Data
 #   2. Date of Birth - Remove Invalid datetime value  
 #   3. Cruise Distance - Split col into  "UOM", "Distance in KM". Convert Miles to KM in Disances.
+warnings.filterwarnings('ignore')
 read_data = data_preprocessing.ReadData(datapath)
 dataframe = read_data.read_data()
 data_preprocessing = data_preprocessing.DataPreprocessing()
@@ -31,6 +33,7 @@ dataframe = feature_engineering.fix_typo_error()
 dataframe = feature_engineering.drop_ID_cols()
 dataframe = feature_engineering.convert_features_to_numeric()
 dataframe = feature_engineering.process_impute_missing_data()
+# dataframe = feature_engineering.remove_outlier()
 util.output_csv(datapath,dataframe,"TheEnd")
 
 x = dataframe.drop(["Ticket Type"], axis=1)
