@@ -30,15 +30,14 @@ dataframe = data_preprocessing.process_data_preprocessing(dataframe)
 feature_engineering = feature_engineering.FeatureEngineer(dataframe)
 # dataframe = feature_engineering.drop_duplicate_rows()
 dataframe = feature_engineering.fix_typo_error()
-dataframe = feature_engineering.drop_ID_cols()
 dataframe = feature_engineering.convert_features_to_numeric()
 dataframe = feature_engineering.process_impute_missing_data()
 # dataframe = feature_engineering.remove_outlier()
+dataframe = feature_engineering.drop_ID_cols()
 util.output_csv(datapath,dataframe,"TheEnd")
 
 x = dataframe.drop(["Ticket Type"], axis=1)
 y = dataframe["Ticket Type"]
-# for i in range(11, 22):
 
 #######
 # PCA #

@@ -33,7 +33,8 @@ class FeatureEngineer:
         """
         Perform the dropping of ID columns
         """
-        ID_cols = ["Logging", "Ext_Intcode","WiFi", "Dining","Entertainment"]
+        # ID_cols = ["Logging", "Ext_Intcode","WiFi", "Dining","Entertainment","Port Check-in Service"]
+        ID_cols = ["Logging", "Ext_Intcode"]
         self._dataframe = util.drop_column(self._dataframe,ID_cols)
         return self._dataframe
 
@@ -122,7 +123,8 @@ class FeatureEngineer:
                                                                         "Onboard Dining Service", "Cabin Comfort",
                                                                         "Online Check-in","Onboard Entertainment","Cabin service",
                                                                         "Baggage handling","Port Check-in Service",
-                                                                        "Onboard Service", "Cleanliness","Gender","Cruise Name"])
+                                                                        "Onboard Service", "Cleanliness","Gender","Cruise Name",
+                                                                        "WiFi", "Dining","Entertainment"])
         self._dataframe = impute_mode.process_impute()
         return self._dataframe
     
