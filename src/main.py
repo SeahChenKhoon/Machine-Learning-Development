@@ -1,6 +1,7 @@
 import data_preprocessing
 import feature_engineering
 import util
+import pandas as pd
 import numpy as np
 import modelling
 import warnings
@@ -74,7 +75,6 @@ for i in range(len(list(models))):
 
     y_train_pred = model.predict(x_train)
     y_test_pred = model.predict(x_test)
-    # pred_prob = model.predict_proba(X_valid)
 
     # Training Set Performance
     model_train_accuracy = accuracy_score(y_train, y_train_pred)
@@ -110,25 +110,64 @@ for i in range(len(list(models))):
     print('='*35)
     print('\n')
 
-########################
-# Logistics Regression #
-########################
-# logistic_regression = LogisticRegression(max_iter=5000)
-# logistic_regression.fit(x_train,y_train)
-# accuracy = logistic_regression.score(x_train, y_train)
-# print(f"n_components:{i} with accuracy: {accuracy}")
-# print(f"Accuracy: {accuracy}")
-# score = cross_val_score(logistic_regression, x, y, cv=5)
-# cv_score = np.mean(score)
-# print(f"cv_score: {cv_score}")
+# ##########################
+# # HyperParameter Tuning  #
+# ##########################
+# from sklearn.model_selection import GridSearchCV
+# # HyperParameter Training
+# rf_param = {"max_depth": [None,5, 8, 10, 15],
+#             "max_features": [5,7, 8, "auto"],
+#             "min_samples_split": [2, 8, 15,20],
+#             "n_estimators": [100, 200, 500, 1000]}
+# # rf_param = {"max_depth": [None,5],
+# #             "max_features": [5,7]}
+# model_param = {}
+# grid_search_cv = GridSearchCV(estimator=RandomForestClassifier(), param_grid=rf_param, cv=5, verbose=2,n_jobs=-1)
+# grid_search_cv.fit(x, y) 
 
-############################
-# Random Forest Classifier #
-############################
-# random_forest_classifier = modelling.RandomForestClassify(dataframe,"Ticket Type",0.2)
-# model = random_forest_classifier.model()
-# accuracy, cv_score, model = random_forest_classifier.train_model(model)
-# print(f"accuracy: {accuracy}")
-# print(f"cv_score: {cv_score}")
+# print(grid_search_cv.cv_results_)
+# df_cv_result = pd.DataFrame(grid_search_cv.cv_results_)
+# df_cv_result = df_cv_result[["params", "mean_test_score","mean_fit_time"]]
+# df_cv_result = pd.concat([df_cv_result.drop(['params'], axis=1), df_cv_result['params'].apply(pd.Series)], axis=1)
+# util.output_csv(datapath,df_cv_result,"CV_result")
+# print(grid_search_cv.best_score_)
+# print(grid_search_cv.best_params_)
+
+
+
+model = RandomForestClassifier(verbose=2, n_jobs=-1, max_depth= None, 
+                                            max_features= 5, min_samples_split= 2, n_estimators= 500)
+model.fit(x_train,y_train)
+
+y_train_pred = model.predict(x_train)
+y_test_pred = model.predict(x_test)
+
+# Training Set Performance
+model_train_accuracy = accuracy_score(y_train, y_train_pred)
+model_train_f1 = f1_score(y_train, y_train_pred, average="weighted")
+model_train_precision = precision_score(y_train, y_train_pred, average="weighted")
+model_train_recall = recall_score(y_train, y_train_pred, average="weighted")
+
+# Test Set Performance
+model_test_accuracy = accuracy_score(y_test, y_test_pred)
+model_test_f1 = f1_score(y_test, y_test_pred, average="weighted")
+model_test_precision = precision_score(y_test, y_test_pred, average="weighted")
+model_test_recall = recall_score(y_test, y_test_pred, average="weighted")
+
+print("Random Forest")
+print("Model Performance for Training set")
+print(" - Accuracy: {:.4f}".format(model_train_accuracy))
+print(" - F1 score: {:.4f}".format(model_train_f1))
+print(" - Precision: {:.4f}".format(model_train_precision))
+print(" - Recall: {:.4f}".format(model_train_recall))
+# print(" - Roc Auc Score: {:.4f}".format(model_train_rocauc_score))
+
+print("--------------------------------------------------")
+print("Model Performance for Test set")
+print(" - Accuracy: {:.4f}".format(model_test_accuracy))
+print(" - F1 score: {:.4f}".format(model_test_f1))
+print(" - Precision: {:.4f}".format(model_test_precision))
+print(" - Recall: {:.4f}".format(model_test_recall))
+# print(" - Roc Auc Score: {:.4.f}".format(model_test_rocauc_score))
 
 
