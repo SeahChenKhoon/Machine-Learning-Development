@@ -77,5 +77,5 @@ class OneHotKeyEncode(ConvertToNumeric):
         Returns:
             dataframe (pd.DataFrame): Return back the processed dataset    
         """
-        encoded_df = pd.get_dummies(self._dataframe, columns=col_name)
+        encoded_df = pd.get_dummies(self._dataframe, columns=col_name, drop_first=True)
         return encoded_df
