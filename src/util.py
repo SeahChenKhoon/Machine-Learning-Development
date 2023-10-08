@@ -22,9 +22,16 @@ def output_csv (data_path:str,dataframe:pd.DataFrame,dateframe_name:str)->None:
     filename = f"{data_path}{dateframe_name}_{timestamp}.csv"
     dataframe.to_csv(filename)
 
-def drop_column(dataframe:pd.DataFrame, col_names:list)->pd.DataFrame:
+def drop_columns(dataframe:pd.DataFrame, col_names:list)->pd.DataFrame:
     """
-    Drop colum
+    Drop specified columns from a pandas DataFrame.
+
+    Parameters:
+    - dataframe (pd.DataFrame): The DataFrame from which columns will be dropped.
+    - col_names (list of str): A list of column names to be dropped from the DataFrame.
+
+    Returns:
+    - pd.DataFrame: A new DataFrame with the specified columns removed.
     """
     for col_name in col_names:
         dataframe.drop(col_name, axis=1,inplace=True)

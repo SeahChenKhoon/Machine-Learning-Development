@@ -2,51 +2,11 @@ import sqlite3
 import datetime
 import util
 import pandas as pd
-
-# class ReadData:
-#     def __init__(self, datapath):
-#         self._datapath = datapath
-
-#     def _read_data_from_db_file(self, db_file_path:str, table_name:str, index_col:str=None)->pd.DataFrame:
-#         """
-#         Read the .db file into a dataset with index column if provided.
-
-#         Parameters:
-#             db_file_path (str): The filename and path in which the process to read from
-#             table_name (str): The table name in which the function to read as
-#             index (str): Specify the index column of the dataset  
-#         Returns:
-#             dataframe (pd.DataFrame): Return back the processed dataset
-#         """
-#         try:
-#             connection = sqlite3.connect(db_file_path + table_name + ".db")
-#             df_cruise_pre = pd.read_sql_query("SELECT * FROM " + table_name, connection)
-#             if index_col != None:
-#                 df_cruise_pre = df_cruise_pre.set_index(index_col)
-#             return df_cruise_pre
-#         except sqlite3.Error as e:
-#             print("SQLite error:", e)
-#             return None
-
-#     def read_data(self)->pd.DataFrame:
-#         """
-#         Perform the following:
-#         * Read pre-cruise data into df_cruise_pre dataset
-#         * Read post-cruise data into df_cruise_post dataset
-#         * Combine both pre-cruise and post-cruise dataset together 
-#         Parameters:
-#             None
-#         Returns:
-#             df_cruise (pd.DataFrame): Return back the combined datasets of pre-cruise and post-cruise
-#         """
-#         df_cruise_pre =  self._read_data_from_db_file(self._datapath, "cruise_pre","index")
-#         df_cruise_post =  self._read_data_from_db_file(self._datapath, "cruise_post","index")
-#         df_cruise = pd.merge(df_cruise_pre, df_cruise_post, on='Ext_Intcode', how='inner')
-#         return df_cruise
+from sklearn.preprocessing import LabelEncoder, OrdinalEncoder
 
 
 class DataPreprocessing:
-    def __init__(self, data_path:str, tablename_1:str, tablename_2:str, index_col:str)->None:
+    def __init__(self, data_path:str, tablename_1:str, tablename_2:str, index_col:str, survey_scale:list[str])->None:
         """
         Initialize a DataPreprocessing object.
 
@@ -58,7 +18,8 @@ class DataPreprocessing:
             data_path (str): The base path where the data files are located.
             tablename_1 (str): The name of the first table name to be processed.
             tablename_2 (str): The name of the second table name to be processed.
-            index_col (str): The common column that joins the 2 data files
+            index_col (str): The common column that joins the 2 data files.
+            survey_scale (list[str]): The scale matrix used in the survey.
 
         Returns:
             None
@@ -67,6 +28,7 @@ class DataPreprocessing:
         self.tablename_1:str = tablename_1
         self.tablename_2:str = tablename_2
         self.index_col:str = index_col
+        self.survey_scale = survey_scale
         self.data1:pd.DataFrame = None
         self.data2:pd.DataFrame = None
         self.merged_data:pd.DataFrame = None
@@ -215,7 +177,7 @@ class DataPreprocessing:
         self.merged_data.loc[~self.merged_data["Distance"].isnull(),"Distance in KM"] =  temp_dist["Distance in KM"]
         
         # 3> Drop "Cruise Distance" and "UOM" columns from dataset
-        self.merged_data = util.drop_column(self.merged_data, ["UOM","Cruise Distance","Distance"])
+        self.merged_data = util.drop_columns(self.merged_data, ["UOM","Cruise Distance","Distance"])
         return
 
     def drop_missing_rows (self, col_name:str)->None:
@@ -253,34 +215,77 @@ class DataPreprocessing:
         """
         current_year = datetime.datetime.now().year
         self.merged_data["Age"] = current_year - self.merged_data[col_name].dt.year
-        util.drop_column(self.merged_data, [col_name])
+        util.drop_columns(self.merged_data, [col_name])
     
-    def clean_and_prepare_data(self)-> None:
+    def label_encode(self, col_names:list[str])->None:
         """
-        Clean and prepare the data by replacing specific values in columns.
+        Encode the specified columns in the DataFrame using Label Encoding.
 
-        This method applies a series of value replacements in various columns of the DataFrame
-        to clean and prepare the data for analysis. Specific replacements include renaming variations
-        of "Blastoise" and "Lapras" in the "Cruise Name" column and removing specific values
-        from other columns. The modifications are performed in place.
+        Label Encoding is used to convert categorical values in the specified columns into
+        numeric values. Each unique category in a column is assigned a unique integer label.
 
         Parameters:
-            self (DataPreprocessing): The instance of the class.
+        - self (DataPreprocessing): The instance of the class.
+        - col_names (list of str): A list of column names to be label encoded.
 
         Returns:
-            None
+        - None
         """
-        self.replace_values_in_column("Cruise Name",["blast", "blast0ise", "blastoise"],"Blastoise")
-        self.replace_values_in_column("Cruise Name",["IAPRAS", "lap", "lapras"],"Lapras")
-        self.replace_values_in_column("Embarkation/Disembarkation time convenient",[0],None)
-        self.replace_values_in_column("Ease of Online booking",[0],None)
-        self.replace_values_in_column("Online Check-in",[0],None)
-        self.replace_values_in_column("Cabin Comfort",[0],None)
-        self.replace_values_in_column("Onboard Service",[0],None)
-        self.replace_values_in_column("Cleanliness",[0],None)
-        self.replace_values_in_column("Embarkation/Disembarkation time convenient",[0],None)
-        return
-    
+        label_encoder = LabelEncoder()
+        for col_name in col_names:
+            self.merged_data[col_name] = label_encoder.fit_transform(self.merged_data[col_name])
+
+    def ordinal_encode(self, list_column:list[str]):
+        """
+        Perform ordinal encoding and handle zero values in specified columns of the DataFrame.
+
+        Ordinal Encoding is used to convert categorical values in the specified columns into
+        numeric values while preserving their ordinal relationships. Zero values are treated as
+        missing values and replaced with 'None'.
+
+        Parameters:
+        self (DataPreprocessing): The instance of the class.
+        list_column (list of str): A list of column names to be processed.
+
+        Returns:
+        - None
+        """
+        encoder = OrdinalEncoder(categories=[self.survey_scale])
+        for col_name in list_column:
+            self.merged_data[col_name] = encoder.fit_transform(self.merged_data[[col_name]])
+            self.merged_data.loc[self.merged_data[col_name]==0, col_name] = None
+
+    def one_hot_key_encode(self, col_names:list[str]):
+        """
+        Perform one-hot encoding on specified columns in the DataFrame.
+
+        One-Hot Encoding is used to convert categorical values in the specified columns into
+        binary columns, where each unique category becomes a new binary column (0 or 1).
+        The original columns are dropped to avoid multicollinearity.
+
+        Parameters:
+        - col_names (list of str): A list of column names to be one-hot encoded.
+
+        Returns:
+        - None
+        """
+        self.merged_data = pd.get_dummies(self.merged_data, columns=col_names, drop_first=True)
+
+    # def convert_features_to_numeric(self)->pd.DataFrame:
+        # impt_order = [None, 'Not at all important', 'A little important', 'Somewhat important',
+        #     'Very important','Extremely important']
+        # convert_binary_col = self.ConvertBinaryColumns(self._dataframe)
+        # self._dataframe = convert_binary_col.process_conversion("Gender",["Female","Male"])
+        # self._dataframe = convert_binary_col.process_conversion("Cruise Name",["Blastoise","Lapras"])
+        # ordinal_encode = convert_features_to_numeric.Ordinal_Encode(self._dataframe)
+        # self._dataframe = ordinal_encode.process_conversion(["Onboard Wifi Service","Onboard Dining Service", "Onboard Entertainment"],
+        #                                                     impt_order)        
+        # label_encode = convert_features_to_numeric.LabelEncode(self._dataframe)
+        # self._dataframe = label_encode.process_conversion("Ticket Type")
+        # ohk_encode = convert_features_to_numeric.OneHotKeyEncode(self._dataframe)
+        # self._dataframe = ohk_encode.process_conversion(["Source of Traffic"])
+        # return self._dataframe
+
     def replace_values_in_column(self, col_name:str, replace_list:list[str], replace_with:str) -> None:
         """
         Replace specified values in a DataFrame column with a new value.
@@ -302,3 +307,90 @@ class DataPreprocessing:
         for word in replace_list:
             self.merged_data.loc[self.merged_data[col_name]==word,col_name] = replace_with
         return 
+
+    def impute_median(self, col_names:list[str])->None:
+        """
+        Impute missing values in specified columns with the median value.
+
+        Missing values in the specified columns are replaced with the median value of each
+        respective column.
+
+        Parameters:
+        - col_names (list of str): A list of column names to be imputed with the median.
+
+        Returns:
+        - None
+        """
+        for col_name in col_names:
+            self.merged_data[col_name].fillna(int(self.merged_data[col_name].median()),inplace=True)    
+
+    def impute_mean(self, col_names:list[str])->None:
+        """
+        Impute missing values in specified columns with the mean value.
+
+        Missing values in the specified columns are replaced with the mean value of each
+        respective column.
+
+        Parameters:
+        - col_names (list of str): A list of column names to be imputed with the mean.
+
+        Returns:
+        - None
+        """
+        for col_name in col_names:
+            self.merged_data[col_name].fillna(int(self.merged_data[col_name].mean()), inplace=True)
+    
+    def impute_mode(self, col_names:list[str])->None:
+        """
+        Impute missing values in specified columns with the mode value.
+
+        Missing values in the specified columns are replaced with the mode (most frequent
+        value) of each respective column.
+
+        Parameters:
+        - col_names (list of str): A list of column names to be imputed with the mode.
+
+        Returns:
+        - None
+        """
+        for col_name in col_names:
+            mode = self.merged_data[col_name].mode()
+            self.merged_data[col_name].fillna(int(mode.iloc[0]), inplace=True)
+
+    def remove_duplicate_rows(self, col_name:str) -> None:
+        """
+        Remove duplicate rows from the DataFrame based on a specified column.
+
+        This function identifies and removes duplicate rows in the DataFrame based on the values
+        in the specified column, keeping the last occurrence of each duplicated value.
+
+        Parameters:
+        - col_name (str): The name of the column used to identify duplicate rows.
+
+        Returns:
+        - None
+        """
+        self.merged_data.drop_duplicates(subset=[col_name], keep="last", inplace=True)
+        # self._dataframe.reset_index(inplace=True)
+        # all_dup_idx = set(self._dataframe["index"].loc[self._dataframe.duplicated(subset=["Ext_Intcode_x"], keep=False)])
+        # last_dup_idx = set(self._dataframe["index"].loc[self._dataframe.duplicated(subset=["Ext_Intcode_x"], keep="first")])
+        # dup_idx_to_remove = all_dup_idx.symmetric_difference(last_dup_idx)
+        # return self._dataframe
+
+    def remove_outlier(self, col_names:list[str])->None:
+        """
+        Perform removal of outliers record
+
+        Parameters:
+            col_names (list): Specify the column names within dataframe for checking and removal of outliers.
+
+        Returns:
+            dataframe (pd.DataFrame): Return back the processed dataset
+        """
+        for feature in col_names:
+            Q1 = self.merged_data[feature].quantile(0.25)
+            Q3 = self.merged_data[feature].quantile(0.75)
+            IQR = Q3 - Q1
+            lower_limit = Q1 - 1.5 * IQR
+            upper_limit = Q3 + 1.5 * IQR
+            self.merged_data = self.merged_data[(self.merged_data[feature] > lower_limit) & (self.merged_data[feature] < upper_limit)]

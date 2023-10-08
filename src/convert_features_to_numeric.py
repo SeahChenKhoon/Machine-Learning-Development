@@ -50,20 +50,6 @@ class Ordinal_Encode(ConvertToNumeric):
         return self._dataframe
         
 
-class LabelEncode(ConvertToNumeric):
-    def process_conversion(self, col_name):
-        """
-        This function process the label encoding on the target column which is Ticket Type
-        
-        Parameters:
-            col_name (str): Specify the column name within dataframe for the function perform processing.
-            
-        Returns:
-            dataframe (pd.DataFrame): Return back the processed dataset
-        """
-        label_encoder = LabelEncoder()
-        self._dataframe[col_name] = label_encoder.fit_transform(self._dataframe[col_name])
-        return self._dataframe
 
 class OneHotKeyEncode(ConvertToNumeric):
     def process_conversion(self, col_name):

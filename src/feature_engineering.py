@@ -103,20 +103,6 @@ class FeatureEngineer:
         impute_pred.process_impute("Cabin Comfort")
         impute_pred = impute_missing_data.ImputeUsingPred(self._dataframe,["Ease of Online booking","Gate location"])
         impute_pred.process_impute("Embarkation/Disembarkation time convenient")
-        # impute_pred = impute_missing_data.ImputeUsingPred(self._dataframe,["Cleanliness"])
-        # impute_pred.process_impute("Cabin service")
-        # impute_pred = impute_missing_data.ImputeUsingPred(self._dataframe,["Cabin Comfort","Online Check-in"])
-        # impute_pred.process_impute("Cleanliness")
-        # impute_pred = impute_missing_data.ImputeUsingPred(self._dataframe,["Ease of Online booking","Cleanliness","Cabin Comfort"])
-        # impute_pred.process_impute("Online Check-in")
-        # impute_pred = impute_missing_data.ImputeUsingPred(self._dataframe,["Embarkation/Disembarkation time convenient",
-        #                                                                    "Gate location","Online Check-in"])
-        # impute_pred.process_impute("Ease of Online booking")
-        # impute_pred = impute_missing_data.ImputeUsingPred(self._dataframe,["Embarkation/Disembarkation time convenient",
-        #                                                                    "Ease of Online booking"])
-        # impute_pred.process_impute("Gate location")
-        # impute_pred = impute_missing_data.ImputeUsingPred(self._dataframe,["Baggage handling"])
-        # impute_pred.process_impute("Onboard Service")
         impute_mode = impute_missing_data.ImputeMode(self._dataframe, ["Onboard Wifi Service", 
                                                                         "Embarkation/Disembarkation time convenient", 
                                                                         "Ease of Online booking","Gate location",
@@ -131,17 +117,6 @@ class FeatureEngineer:
     def convert_features_to_numeric(self)->pd.DataFrame:
         impt_order = [None, 'Not at all important', 'A little important', 'Somewhat important',
             'Very important','Extremely important']
-        """
-        Perform conversion of feature to numeric by
-        1> 
-        s>
-
-
-		Parameters:			
-
-		Returns:
-			dataframe (pd.DataFrame): Return back the processed dataset
-        """
         convert_binary_col = convert_features_to_numeric.ConvertBinaryColumns(self._dataframe)
         self._dataframe = convert_binary_col.process_conversion("Gender",["Female","Male"])
         self._dataframe = convert_binary_col.process_conversion("Cruise Name",["Blastoise","Lapras"])

@@ -1,11 +1,11 @@
-import data_preprocessing
-import feature_engineering
-import util
-import os
 import pandas as pd
 import numpy as np
-import modelling
 import warnings
+import os
+
+import data_preprocessing
+import util
+
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.svm import SVC
@@ -32,11 +32,12 @@ os.environ['PYDEVD_DISABLE_FILE_VALIDATION'] = '1'
 #                                      Preprocessing                           #
 ################################################################################
 # Read Data
-datapath:str = "./data/"
-tablename_1:str = "cruise_pre"
-tablename_2:str = "cruise_post"
-index_col:str = "index"
-dp = data_preprocessing.DataPreprocessing(datapath,tablename_1,tablename_2,index_col)
+DATA_PATH = "./data/"
+survey_scale= [None, 'Not at all important', 'A little important', 'Somewhat important',
+            'Very important','Extremely important']
+dp = data_preprocessing.DataPreprocessing(data_path=DATA_PATH,tablename_1="cruise_pre",tablename_2="cruise_post",index_col="index",
+                                          survey_scale= [None, 'Not at all important', 'A little important', 'Somewhat important',
+            'Very important','Extremely important'])
 dp.load_data()
 dp.merge_data()
 
@@ -49,26 +50,57 @@ dp.clean_datetime_col("Date of Birth")
 dp.mileage_conversion()
 # Remove missing rows from target column
 dp.drop_missing_rows("Ticket Type")
-# Calculate age from DOB
+# Calculate age from DOB ****************** Should move to feature Engineering
 dp.calculate_age_from_DOB("Date of Birth")
 
-#####################
-#  Data Preparation #
-#####################
-# Data Cleansing and Preparation
-dp.clean_and_prepare_data()
+# Data Cleansing invalid values
+dp.replace_values_in_column("Cruise Name",["blast", "blast0ise", "blastoise"],"Blastoise")
+dp.replace_values_in_column("Cruise Name",["IAPRAS", "lap", "lapras"],"Lapras")
+dp.replace_values_in_column("Embarkation/Disembarkation time convenient",[0],None)
+dp.replace_values_in_column("Ease of Online booking",[0],None)
+dp.replace_values_in_column("Online Check-in",[0],None)
+dp.replace_values_in_column("Cabin Comfort",[0],None)
+dp.replace_values_in_column("Onboard Service",[0],None)
+dp.replace_values_in_column("Cleanliness",[0],None)
+dp.replace_values_in_column("Embarkation/Disembarkation time convenient",[0],None)
 
+# Convert binary categorical values to numeric values
+dp.label_encode(["Gender", "Cruise Name"])
+# Label encode target variable
+dp.label_encode(["Ticket Type"])
+# Ordinal encode non-numeric ordinal variable
+dp.ordinal_encode(["Onboard Wifi Service","Onboard Dining Service", "Onboard Entertainment"])     
+# Perform one hot key encode on Source of Traffic
+dp.one_hot_key_encode(["Source of Traffic"])
+
+########################
+#  Impute Missing Data #
+########################
+dp.impute_median(["Age"])
+dp.impute_mean(["Distance in KM"])
+dp.impute_mode(["Onboard Wifi Service", "Embarkation/Disembarkation time convenient", 
+                "Ease of Online booking","Gate location", "Onboard Dining Service", 
+                "Cabin Comfort", "Online Check-in","Onboard Entertainment","Cabin service",
+                "Baggage handling", "Port Check-in Service", "Onboard Service", 
+                "Cleanliness", "Gender", "Cruise Name", "WiFi", "Dining","Entertainment"])
+###########################
+#  Remove Duplicated Rows #
+###########################
+dp.remove_duplicate_rows("Ext_Intcode_x")
+####################
+#  Remove outliers #
+####################
+dp.remove_outlier(["Age","Distance in KM"])
+############################################
+#  Drop ID, and irrelvant post-cruise data #
+############################################
+dp.merged_data = util.drop_columns(dp.merged_data,["Ext_Intcode_x","Ext_Intcode_y","Logging","WiFi","Dining", "Entertainment"])
+
+################################################################################
+#                                      Preprocessing                           #
+################################################################################
 print(dp.merged_data.info())
-# data_preprocessing = data_preprocessing.DataPreprocessing()
-# dataframe = data_preprocessing.process_data_preprocessing(dataframe)
-# feature_engineering = feature_engineering.FeatureEngineer(dataframe)
-# # dataframe = feature_engineering.drop_duplicate_rows()
-# dataframe = feature_engineering.fix_typo_error()
-# dataframe = feature_engineering.convert_features_to_numeric()
-# dataframe = feature_engineering.process_impute_missing_data()
-# # dataframe = feature_engineering.remove_outlier()
-# dataframe = feature_engineering.drop_ID_cols()
-# util.output_csv(datapath,dataframe,"TheEnd")
+util.output_csv(DATA_PATH,dp.merged_data,"TheEnd")
 
 # x = dataframe.drop(["Ticket Type"], axis=1)
 # y = dataframe["Ticket Type"]
