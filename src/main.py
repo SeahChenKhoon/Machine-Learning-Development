@@ -4,7 +4,9 @@ import warnings
 import os
 
 import data_preprocessing
+import model_build
 import util
+import model_eval
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import AdaBoostClassifier
@@ -13,8 +15,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
 import xgboost as xgb
 from sklearn.model_selection import cross_validate
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.preprocessing import StandardScaler
+
 
 from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split, cross_val_score
@@ -33,13 +34,17 @@ os.environ['PYDEVD_DISABLE_FILE_VALIDATION'] = '1'
 ################################################################################
 # Read Data
 DATA_PATH = "./data/"
+TARGET_VARIABLE = "Ticket Type"
 survey_scale= [None, 'Not at all important', 'A little important', 'Somewhat important',
             'Very important','Extremely important']
-dp = data_preprocessing.DataPreprocessing(data_path=DATA_PATH,tablename_1="cruise_pre",tablename_2="cruise_post",index_col="index",
+dp = data_preprocessing.DataPreprocessing(data_path=DATA_PATH,
                                           survey_scale= [None, 'Not at all important', 'A little important', 'Somewhat important',
-            'Very important','Extremely important'])
-dp.load_data()
-dp.merge_data()
+                                            'Very important','Extremely important'])
+data_file_1={"filename":"cruise_pre","index":"index"}
+data_file_2={"filename":"cruise_post","index":"index"}
+data_file_details = {"datafile1":data_file_1, "datafile2":data_file_2}
+dp.load_data(data_file_details)
+
 
 ###################
 #  Data Cleansing #
@@ -49,7 +54,7 @@ dp.clean_datetime_col("Date of Birth")
 # Convert "Cruise Distance" to "Distance in KM"
 dp.mileage_conversion()
 # Remove missing rows from target column
-dp.drop_missing_rows("Ticket Type")
+dp.drop_missing_rows(TARGET_VARIABLE)
 # Calculate age from DOB ****************** Should move to feature Engineering
 dp.calculate_age_from_DOB("Date of Birth")
 
@@ -67,7 +72,7 @@ dp.replace_values_in_column("Embarkation/Disembarkation time convenient",[0],Non
 # Convert binary categorical values to numeric values
 dp.label_encode(["Gender", "Cruise Name"])
 # Label encode target variable
-dp.label_encode(["Ticket Type"])
+dp.label_encode([TARGET_VARIABLE])
 # Ordinal encode non-numeric ordinal variable
 dp.ordinal_encode(["Onboard Wifi Service","Onboard Dining Service", "Onboard Entertainment"])     
 # Perform one hot key encode on Source of Traffic
@@ -96,14 +101,58 @@ dp.remove_outlier(["Age","Distance in KM"])
 ############################################
 dp.merged_data = util.drop_columns(dp.merged_data,["Ext_Intcode_x","Ext_Intcode_y","Logging","WiFi","Dining", "Entertainment"])
 
-################################################################################
-#                                      Preprocessing                           #
-################################################################################
+dp.data_splitting()
+dp.standard_scaler()
+x_train, x_test, y_train, y_test = dp.train_test_split(test_size=0.25,random_size=42)
+
+########################
+#  Logistic Regression #
+########################
+model_type = "logistic_regression"
+md:LogisticRegression = model_build.ModelBuild(model_type)
+md.train(x_train, y_train)
+y_train_pred = md.predict(x_train)
+me = model_eval.ModelEval(model_type, y_train, y_train_pred)
+me.print_report("Training")
+
+md.train(x_test, y_test)
+y_test_pred = md.predict(x_test)
+me = model_eval.ModelEval(model_type, y_test, y_test_pred)
+me.print_report("Testing")
+
+##################
+#  Random Forest #
+##################
+model_type = "random_forest"
+md:LogisticRegression = model_build.ModelBuild(model_type)
+md.train(x_train, y_train)
+y_train_pred = md.predict(x_train)
+me = model_eval.ModelEval(model_type, y_train, y_train_pred)
+me.print_report("Training")
+
+md.train(x_test, y_test)
+y_test_pred = md.predict(x_test)
+me = model_eval.ModelEval(model_type, y_test, y_test_pred)
+me.print_report("Testing")
+
+#############
+#  XG Boost #
+#############
+model_type = "XG Boost"
+md:LogisticRegression = model_build.ModelBuild(model_type)
+md.train(x_train, y_train)
+y_train_pred = md.predict(x_train)
+me = model_eval.ModelEval(model_type, y_train, y_train_pred)
+me.print_report("Training")
+
+md.train(x_test, y_test)
+y_test_pred = md.predict(x_test)
+me = model_eval.ModelEval(model_type, y_test, y_test_pred)
+me.print_report("Testing")
+
 print(dp.merged_data.info())
 util.output_csv(DATA_PATH,dp.merged_data,"TheEnd")
 
-# x = dataframe.drop(["Ticket Type"], axis=1)
-# y = dataframe["Ticket Type"]
 
 
 #######
@@ -114,19 +163,7 @@ util.output_csv(DATA_PATH,dp.merged_data,"TheEnd")
 
 
 
-###################
-# Standard Scaler #
-###################
-# std_scale = StandardScaler()
-# std_scale.fit(x)
-# dataframe = std_scale.transform(x)
 
-###################
-# Min-Max Scaler  #
-###################
-# minmax_scale = MinMaxScaler()
-# minmax_scale.fit(x)
-# x = minmax_scale.transform(x)
 
 
 # x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.25, random_state=1)

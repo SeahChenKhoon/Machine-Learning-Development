@@ -2,11 +2,11 @@ import sqlite3
 import datetime
 import util
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder, OrdinalEncoder
-
+from sklearn.preprocessing import LabelEncoder, OrdinalEncoder, MinMaxScaler, StandardScaler
+from sklearn.model_selection import train_test_split
 
 class DataPreprocessing:
-    def __init__(self, data_path:str, tablename_1:str, tablename_2:str, index_col:str, survey_scale:list[str])->None:
+    def __init__(self, data_path:str, survey_scale:list[str])->None:
         """
         Initialize a DataPreprocessing object.
 
@@ -15,40 +15,44 @@ class DataPreprocessing:
 
         Parameters:
             self (DataPreprocessing): : The instance of the class.
-            data_path (str): The base path where the data files are located.
-            tablename_1 (str): The name of the first table name to be processed.
-            tablename_2 (str): The name of the second table name to be processed.
-            index_col (str): The common column that joins the 2 data files.
             survey_scale (list[str]): The scale matrix used in the survey.
 
         Returns:
             None
         """
-        self.data_path:str =  data_path
-        self.tablename_1:str = tablename_1
-        self.tablename_2:str = tablename_2
-        self.index_col:str = index_col
+        self.data_path = data_path
         self.survey_scale = survey_scale
-        self.data1:pd.DataFrame = None
-        self.data2:pd.DataFrame = None
-        self.merged_data:pd.DataFrame = None
+        self.merged_data:pd.DataFrame = pd.DataFrame()
+        self.X = None
+        self.y = None
 
-    def load_data(self)->None:
+    def load_data(self, data_file_details:dict[str:dict[str:str]])->None:
         """
-        Load data from two SQLite database tables into Pandas DataFrames.
+        Load data from specified files and merge it into the existing merged data.
 
-        This method calls the `read_db` method to read data from two specified
-        SQLite database tables into Pandas DataFrames, and assigns them to
-        instance variables `self.data1` and `self.data2`.
+        This method loads data from one or more specified files, reads each file's data
+        into a Pandas DataFrame, and then merges it into the existing merged data
+        (if any). The merging is done based on the specified index column using an inner join.
 
         Parameters:
             self (DataPreprocessing): The instance of the class.
+            data_file_details (dict[str, dict[str, str]]): A dictionary containing details of data files
+                to be loaded. Each key in the dictionary is a file identifier, and the corresponding
+                value is a dictionary with 'filename' (str) and 'index' (str) specifying the file name
+                and index column.
 
         Returns:
-            None
+            None: The method does not return a value, but it updates the 'merged_data' attribute of the
+            class with the merged DataFrame.
         """
-        self.data1:pd.DataFrame = self.read_db(self.data_path, self.tablename_1,self.index_col)
-        self.data2:pd.DataFrame = self.read_db(self.data_path, self.tablename_2,self.index_col)
+        for datafile in data_file_details.values():
+            filename = datafile['filename']
+            index_col = datafile['index']
+            dataframe:pd.DataFrame = self.read_db(self.data_path, filename, index_col)
+            if self.merged_data.empty:
+                self.merged_data = dataframe
+            else:
+                self.merged_data = pd.merge(self.merged_data, dataframe, on=index_col, how='inner')
 
     def read_db(self, db_data_path:str, table_name:str, index_col:str=None)->pd.DataFrame:
         """
@@ -81,48 +85,6 @@ class DataPreprocessing:
         except sqlite3.Error as e:
             print("SQLite error:", e)
             return None
-
-    def read_data(self)->pd.DataFrame:
-        """
-        Perform the following:
-        * Read pre-cruise data into df_cruise_pre dataset
-        * Read post-cruise data into df_cruise_post dataset
-        * Combine both pre-cruise and post-cruise dataset together 
-        Parameters:
-            None
-        Returns:
-            df_cruise (pd.DataFrame): Return back the combined datasets of pre-cruise and post-cruise
-        """
-        df_cruise_pre =  self._read_data_from_db_file(self._datapath, "cruise_pre","index")
-        df_cruise_post =  self._read_data_from_db_file(self._datapath, "cruise_post","index")
-        df_cruise = pd.merge(df_cruise_pre, df_cruise_post, on='Ext_Intcode', how='inner')
-        return df_cruise
-
-    def merge_data(self):
-        """
-        Merge two Pandas DataFrames based on a common index column.
-
-        This method performs an inner join operation on the two Pandas DataFrames
-        stored in `self.data1` and `self.data2`, using a common index column named
-        'common_index_column'. The result is stored in the `self.merged_data`
-        attribute.
-
-        If either `self.data1` or `self.data2` is `None`, or if the common index
-        column 'common_index_column' is not present in both DataFrames, no merging
-        will occur, and a message is printed indicating that data should be loaded
-        first using the `load_data` method.
-
-        Parameters:
-            self (DataPreprocessing): The instance of the class.
-
-        Returns:
-            None
-        """
-        if self.data1 is not None and self.data2 is not None:
-            self.merged_data = pd.merge(self.data1, self.data2, on=self.index_col, how='inner')
-        else:
-            print("Data not loaded. Call load_data() first.")
-        return
 
     def clean_datetime_col (self, column_name:str)->None:
         """
@@ -271,21 +233,6 @@ class DataPreprocessing:
         """
         self.merged_data = pd.get_dummies(self.merged_data, columns=col_names, drop_first=True)
 
-    # def convert_features_to_numeric(self)->pd.DataFrame:
-        # impt_order = [None, 'Not at all important', 'A little important', 'Somewhat important',
-        #     'Very important','Extremely important']
-        # convert_binary_col = self.ConvertBinaryColumns(self._dataframe)
-        # self._dataframe = convert_binary_col.process_conversion("Gender",["Female","Male"])
-        # self._dataframe = convert_binary_col.process_conversion("Cruise Name",["Blastoise","Lapras"])
-        # ordinal_encode = convert_features_to_numeric.Ordinal_Encode(self._dataframe)
-        # self._dataframe = ordinal_encode.process_conversion(["Onboard Wifi Service","Onboard Dining Service", "Onboard Entertainment"],
-        #                                                     impt_order)        
-        # label_encode = convert_features_to_numeric.LabelEncode(self._dataframe)
-        # self._dataframe = label_encode.process_conversion("Ticket Type")
-        # ohk_encode = convert_features_to_numeric.OneHotKeyEncode(self._dataframe)
-        # self._dataframe = ohk_encode.process_conversion(["Source of Traffic"])
-        # return self._dataframe
-
     def replace_values_in_column(self, col_name:str, replace_list:list[str], replace_with:str) -> None:
         """
         Replace specified values in a DataFrame column with a new value.
@@ -371,11 +318,6 @@ class DataPreprocessing:
         - None
         """
         self.merged_data.drop_duplicates(subset=[col_name], keep="last", inplace=True)
-        # self._dataframe.reset_index(inplace=True)
-        # all_dup_idx = set(self._dataframe["index"].loc[self._dataframe.duplicated(subset=["Ext_Intcode_x"], keep=False)])
-        # last_dup_idx = set(self._dataframe["index"].loc[self._dataframe.duplicated(subset=["Ext_Intcode_x"], keep="first")])
-        # dup_idx_to_remove = all_dup_idx.symmetric_difference(last_dup_idx)
-        # return self._dataframe
 
     def remove_outlier(self, col_names:list[str])->None:
         """
@@ -394,3 +336,58 @@ class DataPreprocessing:
             lower_limit = Q1 - 1.5 * IQR
             upper_limit = Q3 + 1.5 * IQR
             self.merged_data = self.merged_data[(self.merged_data[feature] > lower_limit) & (self.merged_data[feature] < upper_limit)]
+
+    def data_splitting(self):
+        """
+        Split the merged data into features (X) and the target variable (y).
+
+        This method separates the merged data into two parts: the features (X) and the target variable (y).
+        It drops the 'Ticket Type' column to create X and assigns the 'Ticket Type' column to y.
+
+        Parameters:
+            self (DataPreprocessing): The instance of the class.
+
+        Returns:
+            None: The method does not return a value, but it updates the 'X' and 'y' attributes of the class.
+        """
+        self.X = self.merged_data.drop(["Ticket Type"], axis=1)
+        self.y = self.merged_data["Ticket Type"]
+
+    def standard_scaler (self)->None:
+        """
+        Standardize the features using StandardScaler.
+
+        This method standardizes (scales) the feature data (self.X) using the StandardScaler
+        from scikit-learn. It fits the scaler to the feature data and then transforms the
+        feature data to have a mean of 0 and a standard deviation of 1.
+
+        Parameters:
+            self (DataPreprocessing): The instance of the class.
+
+        Returns:
+            None: The method does not return a value, but it updates the 'X' attribute of the class.
+        """
+        std_scale = StandardScaler()
+        std_scale.fit(self.X)
+        self.X = std_scale.transform(self.X)
+
+    def min_max_scaler (self)->None:
+        """
+        Scale the features to a specified range using Min-Max scaling.
+
+        This method scales (transforms) the feature data (self.X) using Min-Max scaling
+        from scikit-learn. It fits the scaler to the feature data and then scales the
+        feature data to a specified range, typically between 0 and 1.
+
+        Parameters:
+            self (DataPreprocessing): The instance of the class.
+
+        Returns:
+            None: The method does not return a value, but it updates the 'X' attribute of the class.
+        """
+        std_scale = MinMaxScaler()
+        std_scale.fit(self.X)
+        self.X = std_scale.transform(self.X)
+
+    def train_test_split(self, test_size:float, random_size:int)->None:
+        return train_test_split(self.X, self.y, test_size=test_size, random_state=random_size)
