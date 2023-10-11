@@ -26,6 +26,12 @@ class DataPreprocessing:
         self.X = None
         self.y = None
 
+    def drop_column(self, columns_to_drop:list[str]):
+        self.merged_data = util.drop_columns(self.merged_data, columns_to_drop)
+
+    def get_x_y(self)->tuple:
+        return self.X, self.y
+
     def load_data(self, data_file_details:dict[str:dict[str:str]])->None:
         """
         Load data from specified files and merge it into the existing merged data.
