@@ -3,8 +3,6 @@ import numpy as np
 import yaml
 import datetime
 from typing import Any
-from sklearn.preprocessing import OrdinalEncoder
-from sklearn.preprocessing import LabelEncoder
 
 def timer(start_time=datetime)->datetime:
     """

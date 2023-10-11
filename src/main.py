@@ -7,17 +7,8 @@ import data_preprocessing
 import model_build
 import util
 import model_eval
-
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.ensemble import AdaBoostClassifier
-from sklearn.svm import SVC
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.linear_model import LogisticRegression
-import xgboost as xgb
+import feature_engineering
 from sklearn.model_selection import cross_validate
-
-
-from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.metrics import accuracy_score, classification_report, ConfusionMatrixDisplay, \
     precision_score, recall_score, f1_score, roc_auc_score, roc_curve
@@ -33,13 +24,11 @@ DATA_PATH:str = "./data/"
 TARGET_VARIABLE:str = "Ticket Type"
 survey_scale:list[str]= [None, 'Not at all important', 'A little important', 'Somewhat important',
             'Very important','Extremely important']
-dp = data_preprocessing.DataPreprocessing(data_path=DATA_PATH,
-                                          survey_scale= [None, 'Not at all important', 'A little important', 'Somewhat important',
-                                            'Very important','Extremely important'])
+dp = data_preprocessing.DataPreprocessing()
 data_file_1:dict={"filename":"cruise_pre","index":"index"}
 data_file_2:dict={"filename":"cruise_post","index":"index"}
 data_file_details:dict = {"datafile1":data_file_1, "datafile2":data_file_2}
-dp.load_data(data_file_details)
+dp.load_data(DATA_PATH, data_file_details)
 
 config_file_path:str = 'config.yaml'
 config:dict = util.read_config_file(config_file_path)
@@ -72,7 +61,7 @@ dp.label_encode(["Gender", "Cruise Name"])
 # Label encode target variable
 dp.label_encode([TARGET_VARIABLE])
 # Ordinal encode non-numeric ordinal variable
-dp.ordinal_encode(["Onboard Wifi Service","Onboard Dining Service", "Onboard Entertainment"])     
+dp.ordinal_encode(["Onboard Wifi Service","Onboard Dining Service", "Onboard Entertainment"], survey_scale)     
 # Perform one hot key encode on Source of Traffic
 dp.one_hot_key_encode(["Source of Traffic"])
 
@@ -100,7 +89,16 @@ dp.remove_outlier(["Age","Distance in KM"])
 dp.drop_column(["Ext_Intcode_x", "Ext_Intcode_y", "Logging", "WiFi", "Dining", "Entertainment"])
 dp.data_splitting()
 dp.standard_scaler()
-
+################################################################################
+#                             Feature Engineering                              #
+################################################################################
+fe = feature_engineering.FeatureEngineer()
+fe.feature_grouping(dp.merged_data,["Onboard Wifi Service", "Onboard Dining Service", "Onboard Entertainment",
+                     "Onboard Service"],"Onboard Survey")
+fe.feature_grouping(dp.merged_data,["Embarkation/Disembarkation time convenient", "Ease of Online booking", 
+                    "Gate location", "Online Check-in", "Port Check-in Service"],"Online Facility")
+fe.feature_grouping(dp.merged_data,["Cabin Comfort", "Cabin service", "Baggage handling", 
+                    "Cleanliness"],"Cabin Facility")
 X:np.ndarray = None
 y:pd.Series = None
 X, y = dp.get_x_y()

@@ -7,25 +7,10 @@ from sklearn.preprocessing import LabelEncoder, OrdinalEncoder, MinMaxScaler, St
 from sklearn.model_selection import train_test_split
 
 class DataPreprocessing:
-    def __init__(self, data_path:str, survey_scale:list[str])->None:
-        """
-        Initialize a DataPreprocessing object.
-
-        This constructor sets up the DataPreprocessing object with the necessary
-        information to load and process data from two data files.
-
-        Parameters:
-            self (DataPreprocessing): : The instance of the class.
-            survey_scale (list[str]): The scale matrix used in the survey.
-
-        Returns:
-            None
-        """
-        self.data_path:str = data_path
-        self.survey_scale:list[str] = survey_scale
-        self.merged_data:pd.DataFrame = pd.DataFrame()
-        self.X:np.ndarray = None
-        self.y:pd.Series = None
+    # def __init__(self)->None:
+    #     self.merged_data:pd.DataFrame = pd.DataFrame()
+    #     self.X:np.ndarray = None
+    #     self.y:pd.Series = None
 
     def drop_column(self, columns_to_drop:list[str])->None:
         """
@@ -42,6 +27,9 @@ class DataPreprocessing:
         self.merged_data:pd.DataFrame = util.drop_columns(self.merged_data, columns_to_drop)
         return None
 
+    def get_merged_data(self):
+        return self.merged_data
+
     def get_x_y(self)->tuple[np.ndarray, pd.Series]:
         """
         Get the feature matrix (X) and target variable (y).
@@ -54,31 +42,29 @@ class DataPreprocessing:
         """
         return self.X, self.y
 
-    def load_data(self, data_file_details:dict[str:dict[str:str]])->None:
+    def load_data(self, data_path:str, data_file_details:dict[str:dict[str:str]])->None:
         """
-        Load data from specified files and merge it into the existing merged data.
+        Load and merge data from multiple files into a single DataFrame.
 
-        This method loads data from one or more specified files, reads each file's data
-        into a Pandas DataFrame, and then merges it into the existing merged data
-        (if any). The merging is done based on the specified index column using an inner join.
+        This method loads data from multiple files specified in `data_file_details`, merges them into
+        a single DataFrame, and stores the merged data in the `merged_data` attribute.
 
         Parameters:
-            self (DataPreprocessing): The instance of the class.
-            data_file_details (dict[str, dict[str, str]]): A dictionary containing details of data files
-                to be loaded. Each key in the dictionary is a file identifier, and the corresponding
-                value is a dictionary with 'filename' (str) and 'index' (str) specifying the file name
-                and index column.
+            data_path (str): The path to the directory where data files are located.
+            data_file_details (dict[str, dict[str, str]]): A dictionary containing details of data
+                files to load. Each value is a dictionary with 'filename' and 'index' keys.
 
         Returns:
-            None: The method does not return a value, but it updates the 'merged_data' attribute of the
-            class with the merged DataFrame.
+            None: This method does not return a value.
         """
+        first_file = True
         for datafile in data_file_details.values():
             filename:dict = datafile['filename']
             index_col:dict = datafile['index']
-            dataframe:pd.DataFrame = self.read_db(self.data_path, filename, index_col)
-            if self.merged_data.empty:
+            dataframe:pd.DataFrame = self.read_db(data_path, filename, index_col)
+            if first_file:
                 self.merged_data = dataframe
+                first_file = False
             else:
                 self.merged_data = pd.merge(self.merged_data, dataframe, on=index_col, how='inner')
         return None
@@ -228,22 +214,21 @@ class DataPreprocessing:
             self.merged_data[col_name] = label_encoder.fit_transform(self.merged_data[col_name])
         return None
 
-    def ordinal_encode(self, list_column:list[str]):
+    def ordinal_encode(self, list_column:list[str], survey_scale:list[str]):
         """
-        Perform ordinal encoding and handle zero values in specified columns of the DataFrame.
+        Perform ordinal encoding on specified columns in the merged DataFrame.
 
-        Ordinal Encoding is used to convert categorical values in the specified columns into
-        numeric values while preserving their ordinal relationships. Zero values are treated as
-        missing values and replaced with 'None'.
+        This method performs ordinal encoding on the columns specified in `list_column` using the
+        provided `survey_scale`. The ordinal encoding results are applied to the merged DataFrame.
 
         Parameters:
-        self (DataPreprocessing): The instance of the class.
-        list_column (list of str): A list of column names to be processed.
+            list_column (list[str]): A list of column names to be ordinal encoded.
+            survey_scale (list[str]): A list representing the ordinal scale for encoding.
 
         Returns:
-        - None
+            None: This method does not return a value.
         """
-        encoder:OrdinalEncoder = OrdinalEncoder(categories=[self.survey_scale])
+        encoder:OrdinalEncoder = OrdinalEncoder(categories=[survey_scale])
         for col_name in list_column:
             self.merged_data[col_name] = encoder.fit_transform(self.merged_data[[col_name]])
             self.merged_data.loc[self.merged_data[col_name]==0, col_name] = None
