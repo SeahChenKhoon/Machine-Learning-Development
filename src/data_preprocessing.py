@@ -2,6 +2,7 @@ import sqlite3
 import datetime
 import util
 import pandas as pd
+import numpy as np
 from sklearn.preprocessing import LabelEncoder, OrdinalEncoder, MinMaxScaler, StandardScaler
 from sklearn.model_selection import train_test_split
 
@@ -20,16 +21,37 @@ class DataPreprocessing:
         Returns:
             None
         """
-        self.data_path = data_path
-        self.survey_scale = survey_scale
+        self.data_path:str = data_path
+        self.survey_scale:list[str] = survey_scale
         self.merged_data:pd.DataFrame = pd.DataFrame()
-        self.X = None
-        self.y = None
+        self.X:np.ndarray = None
+        self.y:pd.Series = None
 
-    def drop_column(self, columns_to_drop:list[str]):
-        self.merged_data = util.drop_columns(self.merged_data, columns_to_drop)
+    def drop_column(self, columns_to_drop:list[str])->None:
+        """
+        Drop specified columns from the merged DataFrame.
 
-    def get_x_y(self)->tuple:
+        This method takes a list of column names and removes these columns from the merged DataFrame.
+        
+        Parameters:
+            columns_to_drop (List[str]): A list of column names to be dropped from the DataFrame.
+
+        Returns:
+            None: The method updates the 'merged_data' attribute with the columns removed.
+        """
+        self.merged_data:pd.DataFrame = util.drop_columns(self.merged_data, columns_to_drop)
+        return None
+
+    def get_x_y(self)->tuple[np.ndarray, pd.Series]:
+        """
+        Get the feature matrix (X) and target variable (y).
+
+        This method returns the feature matrix (X) and the target variable (y) as a tuple.
+
+        Returns:
+            Tuple[np.ndarray, pd.Series]: A tuple containing the feature matrix (X) as a NumPy array and
+            the target variable (y) as a Pandas Series.
+        """
         return self.X, self.y
 
     def load_data(self, data_file_details:dict[str:dict[str:str]])->None:
@@ -52,13 +74,14 @@ class DataPreprocessing:
             class with the merged DataFrame.
         """
         for datafile in data_file_details.values():
-            filename = datafile['filename']
-            index_col = datafile['index']
+            filename:dict = datafile['filename']
+            index_col:dict = datafile['index']
             dataframe:pd.DataFrame = self.read_db(self.data_path, filename, index_col)
             if self.merged_data.empty:
                 self.merged_data = dataframe
             else:
                 self.merged_data = pd.merge(self.merged_data, dataframe, on=index_col, how='inner')
+        return None
 
     def read_db(self, db_data_path:str, table_name:str, index_col:str=None)->pd.DataFrame:
         """
@@ -83,10 +106,10 @@ class DataPreprocessing:
 
         """
         try:
-            connection = sqlite3.connect(db_data_path + table_name + ".db")
-            df_cruise_pre = pd.read_sql_query("SELECT * FROM " + table_name, connection)
+            connection:connection = sqlite3.connect(db_data_path + table_name + ".db")
+            df_cruise_pre:pd.DataFrame = pd.read_sql_query("SELECT * FROM " + table_name, connection)
             if index_col != None:
-                df_cruise_pre = df_cruise_pre.set_index(index_col)
+                df_cruise_pre:pd.DataFrame = df_cruise_pre.set_index(index_col)
             return df_cruise_pre
         except sqlite3.Error as e:
             print("SQLite error:", e)
@@ -113,7 +136,7 @@ class DataPreprocessing:
         """
         self.merged_data[column_name] = pd.to_datetime(self.merged_data[column_name], format='%d/%m/%Y', errors='coerce')
         self.merged_data = self.merged_data.dropna(subset=[column_name])
-        return
+        return None
 
     def mileage_conversion(self)->None:
         """
@@ -136,7 +159,7 @@ class DataPreprocessing:
 
         # Store numeric dataframe["Distance"] into a temporarily dataframe temp_dist["Distance in KM"] and then
         # convert to KM
-        temp_dist = self.merged_data[(~self.merged_data["Distance"].isna())][["Distance","UOM"]]
+        temp_dist:pd.DataFrame = self.merged_data[(~self.merged_data["Distance"].isna())][["Distance","UOM"]]
         temp_dist["Distance in KM"] = pd.to_numeric(temp_dist['Distance'], errors='coerce')
         temp_dist.loc[temp_dist["UOM"]== "Miles","Distance in KM"] = temp_dist["Distance in KM"] * 1.60934
         temp_dist["Distance in KM"] = temp_dist["Distance in KM"].abs().round(0)
@@ -146,7 +169,7 @@ class DataPreprocessing:
         
         # 3> Drop "Cruise Distance" and "UOM" columns from dataset
         self.merged_data = util.drop_columns(self.merged_data, ["UOM","Cruise Distance","Distance"])
-        return
+        return None
 
     def drop_missing_rows (self, col_name:str)->None:
         """
@@ -164,7 +187,7 @@ class DataPreprocessing:
             None
         """
         self.merged_data.dropna(subset=[col_name], inplace=True)
-        return
+        return None
 
     def calculate_age_from_DOB(self, col_name:str)->None:
         """
@@ -184,6 +207,7 @@ class DataPreprocessing:
         current_year = datetime.datetime.now().year
         self.merged_data["Age"] = current_year - self.merged_data[col_name].dt.year
         util.drop_columns(self.merged_data, [col_name])
+        return None
     
     def label_encode(self, col_names:list[str])->None:
         """
@@ -199,9 +223,10 @@ class DataPreprocessing:
         Returns:
         - None
         """
-        label_encoder = LabelEncoder()
+        label_encoder:LabelEncoder = LabelEncoder()
         for col_name in col_names:
             self.merged_data[col_name] = label_encoder.fit_transform(self.merged_data[col_name])
+        return None
 
     def ordinal_encode(self, list_column:list[str]):
         """
@@ -218,10 +243,11 @@ class DataPreprocessing:
         Returns:
         - None
         """
-        encoder = OrdinalEncoder(categories=[self.survey_scale])
+        encoder:OrdinalEncoder = OrdinalEncoder(categories=[self.survey_scale])
         for col_name in list_column:
             self.merged_data[col_name] = encoder.fit_transform(self.merged_data[[col_name]])
             self.merged_data.loc[self.merged_data[col_name]==0, col_name] = None
+        return None
 
     def one_hot_key_encode(self, col_names:list[str]):
         """
@@ -238,6 +264,7 @@ class DataPreprocessing:
         - None
         """
         self.merged_data = pd.get_dummies(self.merged_data, columns=col_names, drop_first=True)
+        return None
 
     def replace_values_in_column(self, col_name:str, replace_list:list[str], replace_with:str) -> None:
         """
@@ -259,7 +286,7 @@ class DataPreprocessing:
         """
         for word in replace_list:
             self.merged_data.loc[self.merged_data[col_name]==word,col_name] = replace_with
-        return 
+        return None 
 
     def impute_median(self, col_names:list[str])->None:
         """
@@ -275,7 +302,8 @@ class DataPreprocessing:
         - None
         """
         for col_name in col_names:
-            self.merged_data[col_name].fillna(int(self.merged_data[col_name].median()),inplace=True)    
+            self.merged_data[col_name].fillna(int(self.merged_data[col_name].median()),inplace=True)
+        return None
 
     def impute_mean(self, col_names:list[str])->None:
         """
@@ -292,6 +320,7 @@ class DataPreprocessing:
         """
         for col_name in col_names:
             self.merged_data[col_name].fillna(int(self.merged_data[col_name].mean()), inplace=True)
+        return None
     
     def impute_mode(self, col_names:list[str])->None:
         """
@@ -309,6 +338,7 @@ class DataPreprocessing:
         for col_name in col_names:
             mode = self.merged_data[col_name].mode()
             self.merged_data[col_name].fillna(int(mode.iloc[0]), inplace=True)
+        return None
 
     def remove_duplicate_rows(self, col_name:str) -> None:
         """
@@ -324,6 +354,7 @@ class DataPreprocessing:
         - None
         """
         self.merged_data.drop_duplicates(subset=[col_name], keep="last", inplace=True)
+        return None
 
     def remove_outlier(self, col_names:list[str])->None:
         """
@@ -336,12 +367,13 @@ class DataPreprocessing:
             dataframe (pd.DataFrame): Return back the processed dataset
         """
         for feature in col_names:
-            Q1 = self.merged_data[feature].quantile(0.25)
-            Q3 = self.merged_data[feature].quantile(0.75)
-            IQR = Q3 - Q1
-            lower_limit = Q1 - 1.5 * IQR
-            upper_limit = Q3 + 1.5 * IQR
+            Q1:float = self.merged_data[feature].quantile(0.25)
+            Q3:float = self.merged_data[feature].quantile(0.75)
+            IQR:float = Q3 - Q1
+            lower_limit:float = Q1 - 1.5 * IQR
+            upper_limit:float = Q3 + 1.5 * IQR
             self.merged_data = self.merged_data[(self.merged_data[feature] > lower_limit) & (self.merged_data[feature] < upper_limit)]
+        return None
 
     def data_splitting(self):
         """
@@ -356,8 +388,9 @@ class DataPreprocessing:
         Returns:
             None: The method does not return a value, but it updates the 'X' and 'y' attributes of the class.
         """
-        self.X = self.merged_data.drop(["Ticket Type"], axis=1)
-        self.y = self.merged_data["Ticket Type"]
+        self.X:np.ndarray = self.merged_data.drop(["Ticket Type"], axis=1)
+        self.y:pd.Series = self.merged_data["Ticket Type"]
+        return None
 
     def standard_scaler (self)->None:
         """
@@ -373,9 +406,10 @@ class DataPreprocessing:
         Returns:
             None: The method does not return a value, but it updates the 'X' attribute of the class.
         """
-        std_scale = StandardScaler()
+        std_scale:StandardScaler = StandardScaler()
         std_scale.fit(self.X)
-        self.X = std_scale.transform(self.X)
+        self.X:np.ndarray = std_scale.transform(self.X)
+        return None
 
     def min_max_scaler (self)->None:
         """
@@ -391,9 +425,27 @@ class DataPreprocessing:
         Returns:
             None: The method does not return a value, but it updates the 'X' attribute of the class.
         """
-        std_scale = MinMaxScaler()
+        std_scale:MinMaxScaler = MinMaxScaler()
         std_scale.fit(self.X)
-        self.X = std_scale.transform(self.X)
+        self.X:np.ndarray = std_scale.transform(self.X)
+        return None
 
-    def train_test_split(self, test_size:float, random_size:int)->None:
+    def train_test_split(self, test_size:float, random_size:int)->tuple[np.ndarray,np.ndarray,pd.Series, pd.Series]:
+        """
+        Split the dataset into training and testing sets.
+
+        This method splits the feature matrix (X) and the target variable (y) into training and testing sets
+        using the train_test_split function from scikit-learn.
+
+        Parameters:
+            test_size (float): The proportion of the dataset to include in the test split.
+            random_state (int): The seed used by the random number generator for reproducibility.
+
+        Returns:
+            tuple: A tuple containing the following elements in this order:
+                - X_train (np.ndarray): The feature matrix for the training set.
+                - X_test (np.ndarray): The feature matrix for the testing set.
+                - y_train (pd.Series): The target variable for the training set.
+                - y_test (pd.Series): The target variable for the testing set.
+        """
         return train_test_split(self.X, self.y, test_size=test_size, random_state=random_size)

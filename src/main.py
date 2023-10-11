@@ -29,20 +29,20 @@ os.environ['PYDEVD_DISABLE_FILE_VALIDATION'] = '1'
 #                                      Preprocessing                           #
 ################################################################################
 # Read Data
-DATA_PATH = "./data/"
-TARGET_VARIABLE = "Ticket Type"
-survey_scale= [None, 'Not at all important', 'A little important', 'Somewhat important',
+DATA_PATH:str = "./data/"
+TARGET_VARIABLE:str = "Ticket Type"
+survey_scale:list[str]= [None, 'Not at all important', 'A little important', 'Somewhat important',
             'Very important','Extremely important']
 dp = data_preprocessing.DataPreprocessing(data_path=DATA_PATH,
                                           survey_scale= [None, 'Not at all important', 'A little important', 'Somewhat important',
                                             'Very important','Extremely important'])
-data_file_1={"filename":"cruise_pre","index":"index"}
-data_file_2={"filename":"cruise_post","index":"index"}
-data_file_details = {"datafile1":data_file_1, "datafile2":data_file_2}
+data_file_1:dict={"filename":"cruise_pre","index":"index"}
+data_file_2:dict={"filename":"cruise_post","index":"index"}
+data_file_details:dict = {"datafile1":data_file_1, "datafile2":data_file_2}
 dp.load_data(data_file_details)
 
-config_file_path = 'config.yaml'
-config = util.read_config_file(config_file_path)
+config_file_path:str = 'config.yaml'
+config:dict = util.read_config_file(config_file_path)
 
 ###################
 #  Data Cleansing #
@@ -100,22 +100,33 @@ dp.remove_outlier(["Age","Distance in KM"])
 dp.drop_column(["Ext_Intcode_x", "Ext_Intcode_y", "Logging", "WiFi", "Dining", "Entertainment"])
 dp.data_splitting()
 dp.standard_scaler()
+
+X:np.ndarray = None
+y:pd.Series = None
 X, y = dp.get_x_y()
+
+x_train:np.ndarray = None
+x_test:np.ndarray = None
+y_train:pd.Series = None
+y_test:pd.Series = None
 x_train, x_test, y_train, y_test = dp.train_test_split(test_size=0.25,random_size=42)
 
 ########################
 #  Logistic Regression #
 ########################
+experimental_management:bool = None
 if 'experimental_management' in config and 'enabled' in config['experimental_management'] \
   and config['experimental_management']['enabled']:
     experimental_management = True
 else:
     experimental_management = False
 
-model_type = "logistic_regression"
-log_regress = model_build.LogRegression(x_train, x_test, y_train, y_test, experimental_management)
+model_type:str = "logistic_regression"
+log_regress:model_build.LogRegression = model_build.LogRegression(x_train, x_test, y_train, y_test, experimental_management)
+y_train_pred:np.ndarray = None
+y_test_pred:np.ndarray = None
 y_train_pred, y_test_pred = log_regress.modelling()
-me = model_eval.ModelEval(model_type, y_train, y_train_pred)
+me:model_eval.ModelEval = model_eval.ModelEval(model_type, y_train, y_train_pred)
 me.print_report("Training")
 
 me = model_eval.ModelEval(model_type, y_test, y_test_pred)
@@ -123,11 +134,14 @@ me.print_report("Testing")
 
 log_regress.process_hyperparameter(X, y)
 
+
 ##################
 #  Random Forest #
 ##################
-model_type = "random_forest"
-random_forest = model_build.RandForest(x_train, x_test, y_train, y_test, experimental_management)
+model_type:str = "random_forest"
+random_forest:model_build.RandForest = model_build.RandForest(x_train, x_test, y_train, y_test, experimental_management)
+y_train_pred:np.ndarray = None
+y_test_pred:np.ndarray = None
 y_train_pred, y_test_pred = random_forest.modelling()
 me = model_eval.ModelEval(model_type, y_train, y_train_pred)
 me.print_report("Training")
@@ -141,7 +155,10 @@ random_forest.process_hyperparameter(X, y)
 #  XG Boost #
 #############
 model_type = "XG Boost"
-xg_boost = model_build.XgBoost(x_train, x_test, y_train, y_test, experimental_management)
+xg_boost:model_build.XgBoost = model_build.XgBoost(x_train, x_test, y_train, y_test, experimental_management)
+
+y_train_pred:np.ndarray = None
+y_test_pred:np.ndarray = None
 y_train_pred, y_test_pred = xg_boost.modelling()
 me = model_eval.ModelEval(model_type, y_train, y_train_pred)
 me.print_report("Training")
