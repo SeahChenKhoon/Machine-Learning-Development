@@ -1,6 +1,4 @@
-# aiap15-SEAH-CHEN-KHOON-S7134252B
-AIAP15 Techical Assessment
-
+# SEAH-CHEN-KHOON-chenkhoon@yahoo.com
 # Project Title
 Prediction of ticket type that potential customers will purchase.
 
