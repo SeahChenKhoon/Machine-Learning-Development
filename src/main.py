@@ -42,7 +42,7 @@ dp.clean_datetime_col("Date of Birth")
 dp.mileage_conversion()
 # Remove missing rows from target column
 dp.drop_missing_rows(TARGET_VARIABLE)
-# Calculate age from DOB ****************** Should move to feature Engineering
+# Calculate age from DOB
 dp.calculate_age_from_DOB("Date of Birth")
 
 # Data Cleansing invalid values
@@ -165,8 +165,5 @@ me = model_eval.ModelEval(model_type, y_test, y_test_pred)
 me.print_report("Testing")
 
 random_forest.process_hyperparameter(X, y)
-
-print(dp.merged_data.info())
-util.output_csv(DATA_PATH,dp.merged_data,"TheEnd")
 
 

@@ -1,4 +1,0 @@
-,model,best_score,best_params
-0,decision_tree,0.7822606658081799,"{'max_depth': 1280, 'max_features': 50, 'max_leaf_nodes': 1280, 'min_impurity_decrease': 0.0, 'splitter': 'best'}"
-1,knn,0.7378053647376389,"{'algorithm': 'ball_tree', 'leaf_size': 200, 'metric': 'cityblock', 'n_neighbors': 15, 'p': 1, 'weights': 'distance'}"
-2,random_forest,0.8198391832725156,"{'bootstrap': False, 'criterion': 'gini', 'max_depth': 40, 'min_samples_split': 4, 'n_estimators': 40}"

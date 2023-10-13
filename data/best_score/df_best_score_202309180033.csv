@@ -1,3 +1,0 @@
-,model,best_score,best_params
-0,decision_tree,0.14798805340898627,"{'class_weight': 'balanced', 'max_depth': 1280, 'max_features': 50, 'max_leaf_nodes': 1280, 'min_impurity_decrease': 0.5, 'splitter': 'best'}"
-1,random_forest,0.8145658210022854,"{'bootstrap': False, 'class_weight': 'balanced_subsample', 'criterion': 'gini', 'max_depth': 40, 'max_features': 'log2', 'min_samples_split': 5, 'n_estimators': 40}"
