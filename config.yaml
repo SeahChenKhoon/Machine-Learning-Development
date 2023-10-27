@@ -1,2 +1,33 @@
-experimental_management:
-  enabled: false
+databases:
+  - file_path: "../data/cruise_pre.db"
+    table_name: "cruise_pre"
+    index: "index"
+  - file_path: "../data/cruise_post.db"
+    table_name: "cruise_post"
+    index: "index"
+
+target_variable: "Ticket Type"
+
+selected_model:
+    - model_name: "logistic_regression"
+      hyperparameter_enabled: True
+      hyperparameter_tuning: null
+    - model_name: "random_forest"
+      hyperparameter_enabled: False
+      hyperparameter_tuning: null
+    - model_name: "XG Boost"
+      hyperparameter_enabled: True
+      hyperparameter_tuning: 
+        max_depth: [null, 3, 4, 5, 6, 8, 10, 12, 15]
+        booster: [gbtree]
+        tree_method: [auto, exact, approx, hist]
+        alpha: [0, 1, 2, 3, 4, 5]
+        lambda: [0, 1, 2, 3, 4, 5]
+        colsample_bytree: [0, 0.5, 1]
+        colsample_bylevel: [0, 0.5, 1]
+        colsample_bynode: [0, 0.5, 1]
+        grow_policy: [depthwise, lossguide]
+        learning_rate: [0.05, 0.10, 0.15, 0.20, 0.25, 0.30]
+        min_child_weight: [1, 3, 5, 7]
+        gamma: [0.0, 0.1, 0.2, 0.3, 0.4]
+
