@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import yaml
-import datetime
+from datetime import datetime
 from typing import Any
 
 def timer(start_time=datetime)->datetime:

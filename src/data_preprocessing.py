@@ -7,11 +7,6 @@ from sklearn.preprocessing import LabelEncoder, OrdinalEncoder, MinMaxScaler, St
 from sklearn.model_selection import train_test_split
 
 class DataPreprocessing:
-    # def __init__(self)->None:
-    #     self.merged_data:pd.DataFrame = pd.DataFrame()
-    #     self.X:np.ndarray = None
-    #     self.y:pd.Series = None
-
     def drop_column(self, columns_to_drop:list[str])->None:
         """
         Drop specified columns from the merged DataFrame.
@@ -42,61 +37,53 @@ class DataPreprocessing:
         """
         return self.X, self.y
 
-    def load_data(self, data_path:str, data_file_details:dict[str:dict[str:str]])->None:
+    def load_data(self, file_details:list)->None:
         """
-        Load and merge data from multiple files into a single DataFrame.
+        Load and merge data from multiple database files.
 
-        This method loads data from multiple files specified in `data_file_details`, merges them into
-        a single DataFrame, and stores the merged data in the `merged_data` attribute.
-
-        Parameters:
-            data_path (str): The path to the directory where data files are located.
-            data_file_details (dict[str, dict[str, str]]): A dictionary containing details of data
-                files to load. Each value is a dictionary with 'filename' and 'index' keys.
+        This method loads data from a list of database files and merges it into a single DataFrame.
+        
+        Args:
+            file_details (list of dict): A list of dictionaries, each containing information about a database file.
+                Each dictionary should have the following keys:
+                - 'file_path' (str): The file path to the database file.
+                - 'table_name' (str): The name of the table in the database to read.
+                - 'index' (str): The name of the index column to use for merging.
 
         Returns:
-            None: This method does not return a value.
+            None
         """
         first_file = True
-        for datafile in data_file_details.values():
-            filename:dict = datafile['filename']
-            index_col:dict = datafile['index']
-            dataframe:pd.DataFrame = self.read_db(data_path, filename, index_col)
+        for datafile in file_details:
+            dataframe:pd.DataFrame = self.read_db(datafile['file_path'], datafile['table_name'], datafile['index'])
             if first_file:
                 self.merged_data = dataframe
                 first_file = False
             else:
-                self.merged_data = pd.merge(self.merged_data, dataframe, on=index_col, how='inner')
+                self.merged_data = pd.merge(self.merged_data, dataframe, on=datafile['index'], how='inner')
         return None
 
-    def read_db(self, db_data_path:str, table_name:str, index_col:str=None)->pd.DataFrame:
+    def read_db(self, file_path:str, table_name:str, index:str)->pd.DataFrame:
         """
-        Read data from a SQLite database table into a Pandas DataFrame.
+        Read data from an SQLite database table.
 
-        This method connects to a SQLite database located at `db_data_path` and reads data
-        from the specified `table_name` into a Pandas DataFrame. Optionally, you can specify
-        an `index_col` to set as the DataFrame's index.
+        This method connects to an SQLite database at the specified file path, reads the data from a table,
+        and returns it as a pandas DataFrame.
 
-        Parameters:
-            self (DataPreprocessing): The instance of the class.
-            db_data_path (str): The path to the SQLite database file.
-            table_name (str): The name of the table to read data from.
-            index_col (str, optional): The column to set as the DataFrame's index (default: None).
+        Args:
+            file_path (str): The file path to the SQLite database file.
+            table_name (str): The name of the table in the database to read.
+            index (str): The name of the index column to set as the DataFrame's index.
 
         Returns:
-            pd.DataFrame: A Pandas DataFrame containing the data from the specified table.
-                        Returns None if an error occurs during database access.
-
-        Raises:
-            sqlite3.Error: If there's an error with the SQLite database connection or query.
+            pd.DataFrame: A pandas DataFrame containing the data from the specified table.
 
         """
         try:
-            connection:connection = sqlite3.connect(db_data_path + table_name + ".db")
-            df_cruise_pre:pd.DataFrame = pd.read_sql_query("SELECT * FROM " + table_name, connection)
-            if index_col != None:
-                df_cruise_pre:pd.DataFrame = df_cruise_pre.set_index(index_col)
-            return df_cruise_pre
+            connection:connection = sqlite3.connect(file_path)
+            dataframe:pd.DataFrame = pd.read_sql_query("SELECT * FROM " + table_name, connection)
+            dataframe:pd.DataFrame = dataframe.set_index(index)
+            return dataframe
         except sqlite3.Error as e:
             print("SQLite error:", e)
             return None

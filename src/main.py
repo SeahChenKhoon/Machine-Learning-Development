@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import warnings
 import os
+import yaml
 
 import data_preprocessing
 import model_build
@@ -19,29 +20,29 @@ os.environ['PYDEVD_DISABLE_FILE_VALIDATION'] = '1'
 ################################################################################
 #                                      Preprocessing                           #
 ################################################################################
-# Read Data
-DATA_PATH:str = "./data/"
-TARGET_VARIABLE:str = "Ticket Type"
 survey_scale:list[str]= [None, 'Not at all important', 'A little important', 'Somewhat important',
             'Very important','Extremely important']
-dp = data_preprocessing.DataPreprocessing()
-data_file_1:dict={"filename":"cruise_pre","index":"index"}
-data_file_2:dict={"filename":"cruise_post","index":"index"}
-data_file_details:dict = {"datafile1":data_file_1, "datafile2":data_file_2}
-dp.load_data(DATA_PATH, data_file_details)
 
-config_file_path:str = 'config.yaml'
-config:dict = util.read_config_file(config_file_path)
+# Read config in yaml file
+with open('../config.yaml', 'r') as yaml_file:
+    data = yaml.safe_load(yaml_file)
+
+dp = data_preprocessing.DataPreprocessing()
+dp.load_data(data['databases'])
+
+target_variable = data['target_variable']
 
 ###################
 #  Data Cleansing #
 ###################
+#  Remove Duplicated Rows 
+dp.remove_duplicate_rows("Ext_Intcode_x")
 # Remove invalid date from DOB
 dp.clean_datetime_col("Date of Birth")
 # Convert "Cruise Distance" to "Distance in KM"
 dp.mileage_conversion()
 # Remove missing rows from target column
-dp.drop_missing_rows(TARGET_VARIABLE)
+dp.drop_missing_rows(target_variable)
 # Calculate age from DOB
 dp.calculate_age_from_DOB("Date of Birth")
 
@@ -59,7 +60,7 @@ dp.replace_values_in_column("Embarkation/Disembarkation time convenient",[0],Non
 # Convert binary categorical values to numeric values
 dp.label_encode(["Gender", "Cruise Name"])
 # Label encode target variable
-dp.label_encode([TARGET_VARIABLE])
+dp.label_encode([target_variable])
 # Ordinal encode non-numeric ordinal variable
 dp.ordinal_encode(["Onboard Wifi Service","Onboard Dining Service", "Onboard Entertainment"], survey_scale)     
 # Perform one hot key encode on Source of Traffic
@@ -75,10 +76,6 @@ dp.impute_mode(["Onboard Wifi Service", "Embarkation/Disembarkation time conveni
                 "Cabin Comfort", "Online Check-in","Onboard Entertainment","Cabin service",
                 "Baggage handling", "Port Check-in Service", "Onboard Service", 
                 "Cleanliness", "Gender", "Cruise Name", "WiFi", "Dining","Entertainment"])
-###########################
-#  Remove Duplicated Rows #
-###########################
-dp.remove_duplicate_rows("Ext_Intcode_x")
 ####################
 #  Remove outliers #
 ####################
@@ -93,12 +90,12 @@ dp.standard_scaler()
 #                             Feature Engineering                              #
 ################################################################################
 fe = feature_engineering.FeatureEngineer()
-fe.feature_grouping(dp.merged_data,["Onboard Wifi Service", "Onboard Dining Service", "Onboard Entertainment",
-                     "Onboard Service"],"Onboard Survey")
-fe.feature_grouping(dp.merged_data,["Embarkation/Disembarkation time convenient", "Ease of Online booking", 
-                    "Gate location", "Online Check-in", "Port Check-in Service"],"Online Facility")
-fe.feature_grouping(dp.merged_data,["Cabin Comfort", "Cabin service", "Baggage handling", 
-                    "Cleanliness"],"Cabin Facility")
+fe.feature_grouping(dp.merged_data,["Ease of Online booking", "Online Check-in", "Port Check-in Service"],
+                    "Booking and Check-In")
+fe.feature_grouping(dp.merged_data,["Onboard Wifi Service", "Onboard Dining Service", 
+                    "Onboard Entertainment", "Onboard Service"],"Onboard Services")
+fe.feature_grouping(dp.merged_data,["Cabin Comfort", "Cabin service"],"Cabin and Comfort")
+
 X:np.ndarray = None
 y:pd.Series = None
 X, y = dp.get_x_y()
@@ -109,61 +106,33 @@ y_train:pd.Series = None
 y_test:pd.Series = None
 x_train, x_test, y_train, y_test = dp.train_test_split(test_size=0.25,random_size=42)
 
-########################
-#  Logistic Regression #
-########################
-experimental_management:bool = None
-if 'experimental_management' in config and 'enabled' in config['experimental_management'] \
-  and config['experimental_management']['enabled']:
-    experimental_management = True
-else:
-    experimental_management = False
+##############
+#  Modelling #
+##############
+for model in data['selected_model']:
+    model_name = model['model_name']
+    hyperparameter_enabled = model['hyperparameter_enabled']
+    hyperparameter_tuning = model['hyperparameter_tuning']
+    if model_name == "logistic_regression":
+        model:model_build.LogRegression = model_build.LogRegression(model_name,x_train, x_test, y_train, y_test, 
+            hyperparameter_enabled, hyperparameter_tuning)
+    elif model_name == "random_forest":
+        model:model_build.RandForest = model_build.RandForest(model_name,x_train, x_test, y_train, y_test, 
+            hyperparameter_enabled, hyperparameter_tuning)
+    elif model_name == "XG Boost":
+        model:model_build.XgBoost = model_build.XgBoost(model_name, x_train, x_test, y_train, y_test, 
+            hyperparameter_enabled, hyperparameter_tuning)
+    else:
+        print(f"{model_name} not found!")
+        continue
+    y_train_pred:np.ndarray = None
+    y_test_pred:np.ndarray = None
+    y_train_pred, y_test_pred = model.modelling()
+    me:model_eval.ModelEval = model_eval.ModelEval(model_name, y_train, y_train_pred)
+    me.print_report("Training")
 
-model_type:str = "logistic_regression"
-log_regress:model_build.LogRegression = model_build.LogRegression(x_train, x_test, y_train, y_test, experimental_management)
-y_train_pred:np.ndarray = None
-y_test_pred:np.ndarray = None
-y_train_pred, y_test_pred = log_regress.modelling()
-me:model_eval.ModelEval = model_eval.ModelEval(model_type, y_train, y_train_pred)
-me.print_report("Training")
+    me = model_eval.ModelEval(model_name, y_test, y_test_pred)
+    me.print_report("Testing")
 
-me = model_eval.ModelEval(model_type, y_test, y_test_pred)
-me.print_report("Testing")
-
-log_regress.process_hyperparameter(X, y)
-
-
-##################
-#  Random Forest #
-##################
-model_type:str = "random_forest"
-random_forest:model_build.RandForest = model_build.RandForest(x_train, x_test, y_train, y_test, experimental_management)
-y_train_pred:np.ndarray = None
-y_test_pred:np.ndarray = None
-y_train_pred, y_test_pred = random_forest.modelling()
-me = model_eval.ModelEval(model_type, y_train, y_train_pred)
-me.print_report("Training")
-
-me = model_eval.ModelEval(model_type, y_test, y_test_pred)
-me.print_report("Testing")
-
-random_forest.process_hyperparameter(X, y)
-
-#############
-#  XG Boost #
-#############
-model_type = "XG Boost"
-xg_boost:model_build.XgBoost = model_build.XgBoost(x_train, x_test, y_train, y_test, experimental_management)
-
-y_train_pred:np.ndarray = None
-y_test_pred:np.ndarray = None
-y_train_pred, y_test_pred = xg_boost.modelling()
-me = model_eval.ModelEval(model_type, y_train, y_train_pred)
-me.print_report("Training")
-
-me = model_eval.ModelEval(model_type, y_test, y_test_pred)
-me.print_report("Testing")
-
-random_forest.process_hyperparameter(X, y)
-
+    model.process_hyperparameter(X, y)
 
