@@ -86,15 +86,16 @@ dp.remove_outlier(["Age","Distance in KM"])
 dp.drop_column(["Ext_Intcode_x", "Ext_Intcode_y", "Logging", "WiFi", "Dining", "Entertainment"])
 dp.data_splitting()
 dp.standard_scaler()
-################################################################################
-#                             Feature Engineering                              #
-################################################################################
-fe = feature_engineering.FeatureEngineer()
-fe.feature_grouping(dp.merged_data,["Ease of Online booking", "Online Check-in", "Port Check-in Service"],
-                    "Booking and Check-In")
-fe.feature_grouping(dp.merged_data,["Onboard Wifi Service", "Onboard Dining Service", 
-                    "Onboard Entertainment", "Onboard Service"],"Onboard Services")
-fe.feature_grouping(dp.merged_data,["Cabin Comfort", "Cabin service"],"Cabin and Comfort")
+
+# ################################################################################
+# #                             Feature Engineering                              #
+# ################################################################################
+# fe = feature_engineering.FeatureEngineer()
+# fe.feature_grouping(dp.merged_data,["Ease of Online booking", "Online Check-in", "Port Check-in Service"],
+#                     "Booking and Check-In")
+# fe.feature_grouping(dp.merged_data,["Onboard Wifi Service", "Onboard Dining Service", 
+#                     "Onboard Entertainment", "Onboard Service"],"Onboard Services")
+# fe.feature_grouping(dp.merged_data,["Cabin Comfort", "Cabin service"],"Cabin and Comfort")
 
 X:np.ndarray = None
 y:pd.Series = None
