@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import LabelEncoder, OrdinalEncoder, MinMaxScaler, StandardScaler
 from sklearn.model_selection import train_test_split
+from imblearn.over_sampling import SMOTE
 
 class DataPreprocessing:
     def drop_column(self, columns_to_drop:list[str])->None:
@@ -402,7 +403,7 @@ class DataPreprocessing:
         self.X:np.ndarray = std_scale.transform(self.X)
         return None
 
-    def train_test_split(self, test_size:float, random_size:int)->tuple[np.ndarray,np.ndarray,pd.Series, pd.Series]:
+    def train_test_split(self, test_size:float, random_state:int)->tuple[np.ndarray,np.ndarray,pd.Series, pd.Series]:
         """
         Split the dataset into training and testing sets.
 
@@ -420,4 +421,19 @@ class DataPreprocessing:
                 - y_train (pd.Series): The target variable for the training set.
                 - y_test (pd.Series): The target variable for the testing set.
         """
-        return train_test_split(self.X, self.y, test_size=test_size, random_state=random_size)
+        return train_test_split(self.X, self.y, test_size=test_size, random_state=random_state)
+    
+    def smote(self, test_size:float, random_state:int):
+        """
+        Applies Synthetic Minority Over-sampling Technique (SMOTE) to balance the dataset.
+
+        Parameters:
+        - test_size (float): The proportion of the synthetic samples to generate compared to the original dataset.
+        - random_state (int): Seed for reproducibility.
+
+        Returns:
+        None: The method modifies the instance's X (features) and y (labels) attributes in-place.
+        """
+        smote = SMOTE(sampling_strategy='auto', random_state=random_state)
+        self.X, self.y = smote.fit_resample(self.X, self.y)
+        return
