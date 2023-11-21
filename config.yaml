@@ -1,8 +1,11 @@
+src_path: "../data/"
+yaml_path: "./data/" 
+
 databases:
-  - file_path: "../data/cruise_pre.db"
+  - file_name: "cruise_pre.db"
     table_name: "cruise_pre"
     index: "index"
-  - file_path: "../data/cruise_post.db"
+  - file_name: "cruise_post.db"
     table_name: "cruise_post"
     index: "index"
 
