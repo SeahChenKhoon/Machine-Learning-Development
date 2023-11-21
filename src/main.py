@@ -28,9 +28,9 @@ with open('../config.yaml', 'r') as yaml_file:
 dp = data_preprocessing.DataPreprocessing()
 dp.load_data(data['src_path'], data['databases'])
 
-target_variable = data['target_variable']
-test_size=0.25
-random_state=42
+TARGET_VARIABLE = data['target_variable']
+TEST_SIZE=0.25
+RANDOM_STATE=42
 
 ###################
 #  Data Cleansing #
@@ -42,7 +42,7 @@ dp.clean_datetime_col("Date of Birth")
 # Convert "Cruise Distance" to "Distance in KM"
 dp.mileage_conversion()
 # Remove missing rows from target column
-dp.drop_missing_rows(target_variable)
+dp.drop_missing_rows(TARGET_VARIABLE)
 # Calculate age from DOB
 dp.calculate_age_from_DOB("Date of Birth")
 
@@ -60,7 +60,7 @@ dp.replace_values_in_column("Embarkation/Disembarkation time convenient",[0],Non
 # Convert binary categorical values to numeric values
 dp.label_encode(["Gender", "Cruise Name"])
 # Label encode target variable
-dp.label_encode([target_variable])
+dp.label_encode([TARGET_VARIABLE])
 # Ordinal encode non-numeric ordinal variable
 dp.ordinal_encode(["Onboard Wifi Service","Onboard Dining Service", "Onboard Entertainment"], survey_scale)     
 # Perform one hot key encode on Source of Traffic
@@ -99,9 +99,9 @@ x_test:np.ndarray = None
 y_train:pd.Series = None
 y_test:pd.Series = None
 
-dp.smote(test_size,random_state)
+dp.smote(TEST_SIZE, RANDOM_STATE)
 
-x_train, x_test, y_train, y_test = dp.train_test_split(test_size,random_state)
+x_train, x_test, y_train, y_test = dp.train_test_split(TEST_SIZE, RANDOM_STATE)
 
 ##############
 #  Modelling #
