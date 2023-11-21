@@ -37,7 +37,7 @@ def output_csv (data_path:str,dataframe:pd.DataFrame,dateframe_name:str)->None:
     Returns:
         dataframe (pd.DataFrame): Return back the processed dataset    
     """
-    timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M")
+    timestamp = datetime.now().strftime("%Y%m%d%H%M")
     filename = f"{data_path}{dateframe_name}_{timestamp}.csv"
     dataframe.to_csv(filename)
     return
