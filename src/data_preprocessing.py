@@ -38,7 +38,7 @@ class DataPreprocessing:
         """
         return self.X, self.y
 
-    def load_data(self, file_details:list)->None:
+    def load_data(self, file_path:str, file_details:list)->None:
         """
         Load and merge data from multiple database files.
 
@@ -56,7 +56,7 @@ class DataPreprocessing:
         """
         first_file = True
         for datafile in file_details:
-            dataframe:pd.DataFrame = self.read_db(datafile['file_path'], datafile['table_name'], datafile['index'])
+            dataframe:pd.DataFrame = self.read_db(file_path + datafile['file_name'], datafile['table_name'], datafile['index'])
             if first_file:
                 self.merged_data = dataframe
                 first_file = False

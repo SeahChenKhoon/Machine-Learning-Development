@@ -26,7 +26,8 @@ with open('../config.yaml', 'r') as yaml_file:
     data = yaml.safe_load(yaml_file)
 
 dp = data_preprocessing.DataPreprocessing()
-dp.load_data(data['databases'])
+dp.load_data(data['src_path'], data['databases'])
+dp.load_data(data['src_path'], data['databases'])
 
 target_variable = data['target_variable']
 test_size=0.25
