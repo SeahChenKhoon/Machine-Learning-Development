@@ -12,11 +12,26 @@ def read_yaml(yaml_filepath:str):
 
 def merge_dataframe(df_pre_cruise, df_post_cruise):
     return pd.merge(df_pre_cruise, df_post_cruise, left_index=True, right_index=True, how='inner')
-    
+
+def split_column(df_dataframe: pd.DataFrame, composite_col: str, list_cols: list, delimiter: str):
+    # Split the composite column into a list of values
+    split_values = df_dataframe[composite_col].str.split(delimiter)
+
+    # Create new columns from the list of values
+    for i, new_col in enumerate(list_cols):
+        df_dataframe[new_col] = split_values.str[i]
+
+    # Drop the original composite column
+    df_dataframe.drop(columns=[composite_col], inplace=True)
+
+    return None
+
 def print_type_value(data):
     print(type(data))
     print(data)
 
+    
+    
 # def timer(start_time=datetime)->datetime:
 #     """
 #     Measure and print the elapsed time.
