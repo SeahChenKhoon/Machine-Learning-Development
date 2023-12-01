@@ -1,8 +1,9 @@
 import pandas as pd
-import numpy as np
 import yaml
+from sklearn.preprocessing import LabelEncoder
 from datetime import datetime
-from typing import Any
+# import numpy as np
+# from typing import Any
 
 def read_yaml(yaml_filepath:str):
     # Read the YAML file
@@ -23,17 +24,54 @@ def split_column(df_dataframe: pd.DataFrame, composite_col: str, list_cols: list
 
     # Drop the original composite column
     df_dataframe.drop(columns=[composite_col], inplace=True)
+    return None
+
+def impute_missing_value(df_dataframe: pd.DataFrame)->None:
+    df_dataframe.dropna(inplace=True)
+    return None
+
+def label_encoder(df_dataframe: pd.DataFrame, list_cols: list) -> None:
+    label_encoder = LabelEncoder()
+    
+    for col in list_cols:
+        df_dataframe[col] = label_encoder.fit_transform(df_dataframe[col].astype(str))
 
     return None
 
-def impute_missing_value(df_dataframe: pd.DataFrame):
-    df_dataframe.dropna(inplace=True)
+def convert_datetime_to_year(df_dataframe: pd.DataFrame, list_cols:list[str], list_new_cols:list, 
+                             format:list[str])->None:
+    count =0
+    for col_name in list_cols:
+        new_col = list_new_cols[count]
+        format_col = format[count]
+        df_dataframe[new_col] = pd.to_datetime(df_dataframe[col_name], format=format_col, 
+                                                   errors='coerce').dt.year.astype('Int32')
+        count += 1
+    remove_col(df_dataframe, list_cols)
+    return None
+
+def remove_col(df_dataframe: pd.DataFrame, list_cols:list[str])->None:
+    df_dataframe.drop(list_cols, axis=1,inplace=True)
 
 def print_type_value(data):
     print(type(data))
     print(data)
 
-    
+def output_csv (data_path:str,dataframe:pd.DataFrame,dateframe_name:str)->None:
+    """
+    This function output a csv from a dataframe and store in data folder
+
+    Parameters:
+        col_name (str): Output filename of the csv
+        dataframe (pd.DataFrame): Dataset in which to output to csv
+
+    Returns:
+        dataframe (pd.DataFrame): Return back the processed dataset    
+    """
+    timestamp = datetime.now().strftime("%Y%m%d%H%M")
+    filename = f"{data_path}{dateframe_name}_{timestamp}.csv"
+    dataframe.to_csv(filename)
+    return
     
 # def timer(start_time=datetime)->datetime:
 #     """
@@ -57,21 +95,7 @@ def print_type_value(data):
 #         print("\n Time taken: %i hours %i minutes and %s seconds." % (thour, tmin, round(tsec,2)))
 #         return
 
-# def output_csv (data_path:str,dataframe:pd.DataFrame,dateframe_name:str)->None:
-#     """
-#     This function output a csv from a dataframe and store in data folder
 
-#     Parameters:
-#         col_name (str): Output filename of the csv
-#         dataframe (pd.DataFrame): Dataset in which to output to csv
-
-#     Returns:
-#         dataframe (pd.DataFrame): Return back the processed dataset    
-#     """
-#     timestamp = datetime.now().strftime("%Y%m%d%H%M")
-#     filename = f"{data_path}{dateframe_name}_{timestamp}.csv"
-#     dataframe.to_csv(filename)
-#     return
 
 # def drop_columns(dataframe:pd.DataFrame, col_names:list)->pd.DataFrame:
 #     """
