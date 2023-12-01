@@ -26,8 +26,21 @@ def split_column(df_dataframe: pd.DataFrame, composite_col: str, list_cols: list
     df_dataframe.drop(columns=[composite_col], inplace=True)
     return None
 
+def remove_missing_value(df_dataframe: pd.DataFrame, list_cols: list) -> None:
+    # Remove rows with missing values in specified columns
+    df_dataframe.dropna(subset=list_cols, inplace=True)
+
+    return None
+
 def impute_missing_value(df_dataframe: pd.DataFrame)->None:
-    df_dataframe.dropna(inplace=True)
+    # Iterate over columns
+    for col in df_dataframe.columns[df_dataframe.isna().any()].tolist():
+        print(col)
+        # Calculate the mean for the column
+        mean_value = round(df_dataframe[col].mean(),0)
+        
+        # Impute missing values in the column with the mean
+        df_dataframe[col].fillna(mean_value, inplace=True)
     return None
 
 def label_encoder(df_dataframe: pd.DataFrame, list_cols: list) -> None:
