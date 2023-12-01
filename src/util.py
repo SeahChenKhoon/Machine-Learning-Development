@@ -26,6 +26,9 @@ def split_column(df_dataframe: pd.DataFrame, composite_col: str, list_cols: list
 
     return None
 
+def impute_missing_value(df_dataframe: pd.DataFrame):
+    df_dataframe.dropna(inplace=True)
+
 def print_type_value(data):
     print(type(data))
     print(data)
