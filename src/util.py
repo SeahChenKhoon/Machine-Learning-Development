@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import yaml
 from sklearn.preprocessing import LabelEncoder
 from datetime import datetime
@@ -50,14 +51,21 @@ def label_encoder(df_dataframe: pd.DataFrame, list_cols: list) -> None:
 
     return None
 
-def convert_datetime_to_year(df_dataframe: pd.DataFrame, list_cols:list[str], list_new_cols:list, 
+def convert_object_to_datetime(df_dataframe: pd.DataFrame, list_cols:list[str], 
                              format:list[str])->None:
     count =0
     for col_name in list_cols:
-        new_col = list_new_cols[count]
         format_col = format[count]
-        df_dataframe[new_col] = pd.to_datetime(df_dataframe[col_name], format=format_col, 
-                                                   errors='coerce').dt.year.astype('Int32')
+        df_dataframe[col_name] = pd.to_datetime(df_dataframe[col_name], format=format_col, 
+                                                   errors='coerce')
+        count += 1
+    return None
+
+def convert_datetime_to_year(df_dataframe: pd.DataFrame, list_cols:list[str], list_new_cols:list)->None:
+    count =0
+    for col_name in list_cols:
+        new_col = list_new_cols[count]
+        df_dataframe[new_col] = df_dataframe[col_name].dt.year.astype(np.int32)
         count += 1
     remove_col(df_dataframe, list_cols)
     return None
