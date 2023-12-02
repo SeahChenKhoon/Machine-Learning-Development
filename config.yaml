@@ -1,10 +1,15 @@
-data_path: "../data/"
+data_path: "./data/"
+test_size: 0.2
+random_state: 1
+target_variable: "Ticket Type"
 
 databases:
-  - file_name: "cruise_pre.db"
+  - id: 0
+    file_name: "cruise_pre.db"
     table_name: "cruise_pre"
     index: "index"
-  - file_name: "cruise_post.db"
+  - id: 1
+    file_name: "cruise_post.db"
     table_name: "cruise_post"
     index: "index"
 
