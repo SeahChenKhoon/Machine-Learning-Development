@@ -35,7 +35,6 @@ def remove_missing_value(df_dataframe: pd.DataFrame, list_cols: list) -> None:
 def impute_missing_value(df_dataframe: pd.DataFrame)->None:
     # Iterate over columns
     for col in df_dataframe.columns[df_dataframe.isna().any()].tolist():
-        print(col)
         # Calculate the mean for the column
         mean_value = round(df_dataframe[col].mean(),0)
         
