@@ -2,17 +2,15 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
+from imblearn.over_sampling import SMOTE
 import util
 
-def plot_corr_chart(df_dataframe: pd.DataFrame)->None:
-    corr_matrix = df_dataframe.corr()
-    mask = np.triu(np.ones_like(corr_matrix, dtype=bool))
 
-    # Plot the heatmap with the diagonal elements hidden
-    plt.figure(figsize=(20, 20))
-    sns.heatmap(corr_matrix, annot=True, mask=mask, vmin=-1, vmax=1, cmap="coolwarm")
-    plt.title('Correlation Coefficient Of Predictors')
-    plt.show()
+
+def fe_SMOTE(X, y, random_state):
+    os = SMOTE(random_state=random_state)
+    columns = X.columns
+    return os.fit_resample(X, y)
 
 def convert_miles_to_KM (df_dataframe: pd.DataFrame, col_name:str)->None:
     df_dataframe[col_name] *= 1.609344
@@ -24,9 +22,19 @@ def calc_year_diff (df_dataframe: pd.DataFrame, minuend_col:str, subtrahend_col:
     return None
 
 def denote_missing_col(df_dataframe):
+    missing_col_list = []
     for col_name in df_dataframe.columns:
         if df_dataframe[col_name].isnull().sum() > 0:
-            df_dataframe[col_name + "_missing"] = df_dataframe[col_name].fillna(1)
+            # df_dataframe[col_name + "_missing"] = df_dataframe[col_name].fillna(11)
+            df_dataframe[col_name + "_missing"] = df_dataframe[col_name].isnull().astype(int)
+            missing_col_list.append(col_name + "_missing")
+    print(missing_col_list)
+    # Create a new column "tot_missing_col" that represents the total number of missing values
+    df_dataframe['tot_missing_col'] = df_dataframe[missing_col_list].sum(axis=1)
+    print(df_dataframe['tot_missing_col'].head())
+    util.remove_col(df_dataframe, missing_col_list)
+    return None
+        
 
 def impute_missing_value(df_dataframe: pd.DataFrame, impute_type, col_list:list[str]=None,none_val=None)->None:
     if impute_type =="mean":

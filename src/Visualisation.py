@@ -1,14 +1,16 @@
 import pandas as pd
+import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
 def vs_countplot_both(df_dataframe: pd.DataFrame, x_col:str, hue_col:str=None)->None:
-    plt.figure(figsize=(4, 4))
+    plt.figure(figsize=(10, 4))
     ax = sns.countplot(x=x_col,  data=df_dataframe)
     for container in ax.containers:
         ax.bar_label(container)
     plt.show()
 
+    plt.figure(figsize=(10, 4))
     ax = sns.countplot(x=x_col,  data=df_dataframe, hue='Ticket Type')
     for container in ax.containers:
         ax.bar_label(container)
@@ -38,3 +40,28 @@ def vs_countplot_target(df_dataframe: pd.DataFrame, x_col:str, hue_col:str=None)
         ax.bar_label(container)
     plt.show()
     return None
+
+def vs_pieplot(df_dataframe: pd.DataFrame, x_col:str):
+    # Calculate the value counts and percentages
+    value_counts = df_dataframe[x_col].value_counts()
+    percentages = (value_counts / len(df_dataframe)) * 100
+
+    # Create a pie plot
+    plt.figure(figsize=(4, 4))
+    plt.pie(percentages, labels=percentages.index, autopct='%1.1f%%', startangle=90, colors=sns.color_palette('pastel'))
+
+    # Add a title
+    plt.title('Distribution of Ticket Types')
+
+    # Show the plot
+    plt.show()
+
+def vs_plot_corr_chart(df_dataframe: pd.DataFrame)->None:
+    corr_matrix = df_dataframe.corr()
+    mask = np.triu(np.ones_like(corr_matrix, dtype=bool))
+
+    # Plot the heatmap with the diagonal elements hidden
+    plt.figure(figsize=(20, 20))
+    sns.heatmap(corr_matrix, annot=True, mask=mask, vmin=-1, vmax=1, cmap="coolwarm")
+    plt.title('Correlation Coefficient Of Predictors')
+    plt.show()
