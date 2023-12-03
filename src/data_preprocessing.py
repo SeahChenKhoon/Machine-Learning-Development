@@ -1,6 +1,32 @@
 import pandas as pd
-import sqlite3
+import util
 
+def dp_replace_value (df_dataframe: pd.DataFrame, col_list:list[str], replace_val:any, replace_with:any,
+                      like_ind:bool=False):
+    for col_name in col_list:
+        if like_ind == False:
+            df_dataframe.loc[df_dataframe[col_name]==replace_val,col_name] = replace_with
+        else:
+            str_len = len(replace_val)
+            df_dataframe['substring'] = df_dataframe[col_name].str[:str_len]
+            df_dataframe.loc[df_dataframe['substring'].str.upper()== replace_val.upper(), col_name] = replace_with
+            util.remove_col(df_dataframe,'substring')
+    return None 
+
+def dp_restrict_val (df_dataframe: pd.DataFrame, col_list:list[str], valid_val_list:list):
+    for col_name in col_list:
+        df_dataframe = df_dataframe[df_dataframe[col_name].isin(valid_val_list)]   
+    return None
+
+# def dp_remove_columns_with_high_missing(df_dataframe: pd.DataFrame, threshold=0.4)->None:
+#     # Calculate the percentage of missing values for each column
+#     missing_percentages = df_dataframe.isnull().mean()
+#     # Identify columns exceeding the threshold
+#     columns_to_remove = missing_percentages[missing_percentages > threshold].index
+#     print(columns_to_remove)
+#     # Remove identified columns
+#     df_filtered = df_dataframe.drop(columns=columns_to_remove)
+#     return None
 
 
 

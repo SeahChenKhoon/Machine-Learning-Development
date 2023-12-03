@@ -33,16 +33,6 @@ def remove_missing_value(df_dataframe: pd.DataFrame, list_cols: list) -> None:
 
     return None
 
-def impute_missing_value(df_dataframe: pd.DataFrame)->None:
-    # Iterate over columns
-    for col in df_dataframe.columns[df_dataframe.isna().any()].tolist():
-        # Calculate the mean for the column
-        mean_value = round(df_dataframe[col].mean(),0)
-        
-        # Impute missing values in the column with the mean
-        df_dataframe[col].fillna(mean_value, inplace=True)
-    return None
-
 def label_encoder(df_dataframe: pd.DataFrame, list_cols: list) -> None:
     label_encoder = LabelEncoder()
     
