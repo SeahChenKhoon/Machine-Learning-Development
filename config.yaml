@@ -4,12 +4,29 @@ random_state: 1
 target_variable: "Ticket Type"
 
 databases:
-  - id: 0
-    file_name: "cruise_pre.db"
+  - file_name: "cruise_pre.db"
     table_name: "cruise_pre"
     index: "index"
-  - id: 1
-    file_name: "cruise_post.db"
+  - file_name: "cruise_post.db"
     table_name: "cruise_post"
     index: "index"
+  
+composite_fields_to_split:
+  - composite_field: "Source of Traffic"
+    new_column_list: "['Source', 'Traffic']"
+    delimiter: " - "
+  - composite_field: "Cruise Distance"
+    new_column_list: "['Distance', 'Dist_Metrics']"
+    delimiter: " "
+
+ID_columns: "['Ext_Intcode_x', 'Ext_Intcode_y']"
+
+convert_object_to_datetime: 
+  - column_list: "['Date of Birth']"
+    format: "%d/%m/%Y"
+  - column_list: "['Logging']"
+    format: "%d/%m/%Y %H:%M"
+
+
+
 

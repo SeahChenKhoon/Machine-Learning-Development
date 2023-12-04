@@ -1,5 +1,6 @@
 import pandas as pd
 import util
+import numpy as np
 
 def dp_replace_value (df_dataframe: pd.DataFrame, col_list:list[str], replace_val:any, replace_with:any,
                       like_ind:bool=False):
@@ -28,7 +29,47 @@ def dp_remove_columns_with_high_missing(df_dataframe: pd.DataFrame, threshold=0.
     df_filtered = df_dataframe.drop(columns=columns_to_remove)
     return None
 
+def dp_convert_object_to_datetime(df_dataframe: pd.DataFrame, list_cols:list[str], 
+                             format_str:str)->None:
+    for col_name in list_cols:
+        df_dataframe[col_name] = pd.to_datetime(df_dataframe[col_name], format=format_str, errors='coerce')
+    return None
 
+def dp_remove_id_columns(df_dataframe: pd.DataFrame, list_cols:list[str]):
+    util.util_remove_col(df_dataframe, list_cols)
+        #  util_remove_col()
+    return None
+
+# def dp_convert_object_to_datetime(df_dataframe: pd.DataFrame, list_cols:list[str], 
+#                              format:list[str])->None:
+#     count =0
+#     for col_name in list_cols:
+#         format_col = format[count]
+#         df_dataframe[col_name] = pd.to_datetime(df_dataframe[col_name], format=format_col, 
+#                                                    errors='coerce')
+#         count += 1
+#     return None
+
+def dp_split_column(df_dataframe: pd.DataFrame, composite_col: str, list_cols: list, delimiter: str):
+    # Split the composite column into a list of values
+    split_values = df_dataframe[composite_col].str.split(delimiter)
+
+    # Create new columns from the list of values
+    for i, new_col in enumerate(list_cols):
+        df_dataframe[new_col] = split_values.str[i]
+
+    # Drop the original composite column
+    df_dataframe.drop(columns=[composite_col], inplace=True)
+    return None
+
+def dp_convert_datetime_to_year(df_dataframe: pd.DataFrame, list_cols:list[str], list_new_cols:list)->None:
+    count =0
+    for col_name in list_cols:
+        new_col = list_new_cols[count]
+        df_dataframe[new_col] = df_dataframe[col_name].dt.year.astype(np.int32)
+        count += 1
+    util.util_remove_col(df_dataframe, list_cols)
+    return None
 
         
 # class LogRegression(ModelBuild):

@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import yaml
+import util
 from sklearn.preprocessing import LabelEncoder
 from datetime import datetime
 # import numpy as np
@@ -14,18 +15,6 @@ def read_yaml(yaml_filepath:str):
 
 def merge_dataframe(df_pre_cruise, df_post_cruise):
     return pd.merge(df_pre_cruise, df_post_cruise, left_index=True, right_index=True, how='inner')
-
-def split_column(df_dataframe: pd.DataFrame, composite_col: str, list_cols: list, delimiter: str):
-    # Split the composite column into a list of values
-    split_values = df_dataframe[composite_col].str.split(delimiter)
-
-    # Create new columns from the list of values
-    for i, new_col in enumerate(list_cols):
-        df_dataframe[new_col] = split_values.str[i]
-
-    # Drop the original composite column
-    df_dataframe.drop(columns=[composite_col], inplace=True)
-    return None
 
 def remove_missing_value(df_dataframe: pd.DataFrame, list_cols: list) -> None:
     # Remove rows with missing values in specified columns
@@ -41,31 +30,9 @@ def label_encoder(df_dataframe: pd.DataFrame, list_cols: list) -> None:
 
     return None
 
-def convert_object_to_datetime(df_dataframe: pd.DataFrame, list_cols:list[str], 
-                             format:list[str])->None:
-    count =0
-    for col_name in list_cols:
-        format_col = format[count]
-        df_dataframe[col_name] = pd.to_datetime(df_dataframe[col_name], format=format_col, 
-                                                   errors='coerce')
-        count += 1
-    return None
-
-def convert_datetime_to_year(df_dataframe: pd.DataFrame, list_cols:list[str], list_new_cols:list)->None:
-    count =0
-    for col_name in list_cols:
-        new_col = list_new_cols[count]
-        df_dataframe[new_col] = df_dataframe[col_name].dt.year.astype(np.int32)
-        count += 1
-    remove_col(df_dataframe, list_cols)
-    return None
-
-def remove_col(df_dataframe: pd.DataFrame, list_cols:list[str])->None:
+def util_remove_col(df_dataframe: pd.DataFrame, list_cols:list[str])->None:
     df_dataframe.drop(list_cols, axis=1,inplace=True)
 
-def print_type_value(data):
-    print(type(data))
-    print(data)
 
 def output_csv (data_path:str,dataframe:pd.DataFrame,dateframe_name:str)->None:
     """
