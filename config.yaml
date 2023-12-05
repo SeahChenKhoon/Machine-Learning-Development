@@ -23,9 +23,6 @@ composite_fields_to_split:
 ID_columns: "['Ext_Intcode_x', 'Ext_Intcode_y']"
 
 convert_obj_numeric:
-  - col_list: "['Embarkation/Disembarkation time convenient', 'Ease of Online booking', 'Gate location', 'Online Check-in', 'Cabin Comfort',
-      'Cabin service', 'Baggage handling', 'Port Check-in Service', 'Onboard Service','Cleanliness']"
-    dtype: 'int32'
   - col_list: "['Distance']"
     dtype: 'float64'
   
