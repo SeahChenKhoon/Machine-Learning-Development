@@ -2,6 +2,7 @@ data_path: "./data/"
 test_size: 0.2
 random_state: 1
 target_variable: "Ticket Type"
+display_stub: False
 
 databases:
   - file_name: "cruise_pre.db"
@@ -21,12 +22,67 @@ composite_fields_to_split:
 
 ID_columns: "['Ext_Intcode_x', 'Ext_Intcode_y']"
 
-convert_object_to_datetime: 
+convert_obj_datetime: 
   - column_list: "['Date of Birth']"
     format: "%d/%m/%Y"
   - column_list: "['Logging']"
     format: "%d/%m/%Y %H:%M"
 
+pct_missing_threshold: 0.4
+
+continuous_variables: "['Date of Birth', 'Distance', 'Logging']"
 
 
+
+dirty_data_setting:
+  - field_list: "['Gender']"
+    replace_val: 'F'
+    replace_with: 'Female'
+    like_ind: True
+  - field_list: "['Gender']"
+    replace_val: 'M'
+    replace_with: 'Male'
+    like_ind: True
+  - field_list: "['Cruise Name']"
+    replace_val: 'L'
+    replace_with: 'Lapras'
+    like_ind: True
+  - field_list: "['Cruise Name']"
+    replace_val: 'b'
+    replace_with: 'Blastoise'
+    like_ind: True
+  - field_list: "['Embarkation/Disembarkation time convenient', 'Ease of Online booking', 'Gate location',  'Online Check-in', 'Cabin Comfort', 
+      'Cabin service', 'Baggage handling', 'Port Check-in Service', 'Onboard Service', 'Cleanliness']"
+    replace_val: 0
+    replace_with: None
+    like_ind: False
+
+
+valid_data_setting:
+  - col_list: "['Gender']"
+    valid_data_list: "[None, 'Female','Male']"
+  - col_list: "['Onboard Wifi Service', 'Onboard Dining Service','Onboard Entertainment']"
+    valid_data_list: "[None, 'Not at all important', 'A little important', 'Somewhat important', 'Very important', 'Extremely important']"
+  - col_list: "['Embarkation/Disembarkation time convenient', 'Ease of Online booking', 'Gate location', 'Online Check-in', 'Cabin Comfort',
+      'Cabin service', 'Baggage handling', 'Port Check-in Service', 'Onboard Service', 'Cleanliness']"
+    valid_data_list: "[None,1.0, 2.0, 3.0, 4.0, 5.0]"
+  - col_list: "['Cruise Name']"
+    valid_data_list: "[None,'Lapras','Blastoise']"
+  - col_list: "['Ticket Type']"
+    valid_data_list: "[None,'Deluxe','Luxury', 'Standard']"
+  - col_list: "['Source']"
+    valid_data_list: "[None,'Indirect','Direct']"
+  - col_list: "['Dining']"
+    valid_data_list: "[None,0, 1]"
+  - col_list: "['Traffic']"
+    valid_data_list: "[None,'Search Engine','Company Website','Email Marketing','Social Media']"
+  - col_list: "['Dist_Metrics']"
+    valid_data_list: "[None,'KM','Miles']"
+
+non_numeric_cols: "['Gender','Onboard Wifi Service','Onboard Dining Service','Onboard Entertainment','Cruise Name',
+                            'Ticket Type','Source','Traffic','Dist_Metrics']"
+
+convert_date_yyyy:
+  col_list: "['Date of Birth','Logging']"
+  yyyy_col_list: "['Year of Birth','Year of Logging']"
 

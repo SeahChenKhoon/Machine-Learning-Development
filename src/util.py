@@ -1,8 +1,6 @@
 import pandas as pd
 import numpy as np
 import yaml
-import util
-from sklearn.preprocessing import LabelEncoder
 from datetime import datetime
 # import numpy as np
 # from typing import Any
@@ -13,25 +11,9 @@ def read_yaml(yaml_filepath:str):
         data = yaml.safe_load(file)
         return data
 
-def merge_dataframe(df_pre_cruise, df_post_cruise):
-    return pd.merge(df_pre_cruise, df_post_cruise, left_index=True, right_index=True, how='inner')
-
-def remove_missing_value(df_dataframe: pd.DataFrame, list_cols: list) -> None:
-    # Remove rows with missing values in specified columns
-    df_dataframe.dropna(subset=list_cols, inplace=True)
-
-    return None
-
-def label_encoder(df_dataframe: pd.DataFrame, list_cols: list) -> None:
-    label_encoder = LabelEncoder()
-    
-    for col in list_cols:
-        df_dataframe[col] = label_encoder.fit_transform(df_dataframe[col].astype(str))
-
-    return None
-
-def util_remove_col(df_dataframe: pd.DataFrame, list_cols:list[str])->None:
+def util_rm_col(df_dataframe: pd.DataFrame, list_cols:list[str])->None:
     df_dataframe.drop(list_cols, axis=1,inplace=True)
+    return None
 
 
 def output_csv (data_path:str,dataframe:pd.DataFrame,dateframe_name:str)->None:

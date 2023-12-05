@@ -1,75 +1,153 @@
 import pandas as pd
 import util
 import numpy as np
+import ast
+from sklearn.preprocessing import LabelEncoder
 
-def dp_replace_value (df_dataframe: pd.DataFrame, col_list:list[str], replace_val:any, replace_with:any,
-                      like_ind:bool=False):
-    for col_name in col_list:
-        if like_ind == False:
-            df_dataframe.loc[df_dataframe[col_name]==replace_val,col_name] = replace_with
-        else:
-            str_len = len(replace_val)
-            df_dataframe['substring'] = df_dataframe[col_name].str[:str_len]
-            df_dataframe.loc[df_dataframe['substring'].str.upper()== replace_val.upper(), col_name] = replace_with
-            util.remove_col(df_dataframe,'substring')
-    return None 
+class DataProcessing:
+    def __init__(self, dataframe:pd.DataFrame, display_stub) -> None:
+        self.__dataframe = dataframe
+        self.__display_stub = display_stub
 
-def dp_restrict_val (df_dataframe: pd.DataFrame, col_list:list[str], valid_val_list:list):
-    for col_name in col_list:
-        df_dataframe = df_dataframe[df_dataframe[col_name].isin(valid_val_list)]   
-    return None
+    def get_dataframe(self) -> pd.DataFrame:
+        return self.__dataframe
 
-def dp_remove_columns_with_high_missing(df_dataframe: pd.DataFrame, threshold=0.4)->None:
-    # Calculate the percentage of missing values for each column
-    missing_percentages = df_dataframe.isnull().mean()
-    # Identify columns exceeding the threshold
-    columns_to_remove = missing_percentages[missing_percentages > threshold].index
-    print(columns_to_remove)
-    # Remove identified columns
-    df_filtered = df_dataframe.drop(columns=columns_to_remove)
-    return None
+    def label_encoder(self, list_cols: list) -> None:
+        label_encoder = LabelEncoder()
+        
+        for col in ast.literal_eval(list_cols):
+            self.__dataframe[col] = label_encoder.fit_transform(self.__dataframe[col].astype(str))
+        if self.__display_stub == True:
+            print(self.__dataframe.shape)
+        return None
 
-def dp_convert_object_to_datetime(df_dataframe: pd.DataFrame, list_cols:list[str], 
-                             format_str:str)->None:
-    for col_name in list_cols:
-        df_dataframe[col_name] = pd.to_datetime(df_dataframe[col_name], format=format_str, errors='coerce')
-    return None
+    def valid_data_processing(self, valid_data_info:list)->None:
+        for valid_data_col in valid_data_info:
+            self.restrict_val(ast.literal_eval(valid_data_col['col_list']), 
+                                 ast.literal_eval(valid_data_col['valid_data_list']))
+        if self.__display_stub == True:
+            print(self.__dataframe.shape)
+        return None
 
-def dp_remove_id_columns(df_dataframe: pd.DataFrame, list_cols:list[str]):
-    util.util_remove_col(df_dataframe, list_cols)
-        #  util_remove_col()
-    return None
+    def restrict_val (self,  col_list:list[str], valid_val_list:list):
+        for col_name in col_list:
+            if self.__display_stub == True:
+                print(col_name)
+                print(self.__dataframe[col_name].unique())
+            self.__dataframe = self.__dataframe[self.__dataframe[col_name].isin(valid_val_list)]
+            if self.__display_stub == True:
+                print(self.__dataframe.shape)
+        return None
 
-# def dp_convert_object_to_datetime(df_dataframe: pd.DataFrame, list_cols:list[str], 
-#                              format:list[str])->None:
-#     count =0
-#     for col_name in list_cols:
-#         format_col = format[count]
-#         df_dataframe[col_name] = pd.to_datetime(df_dataframe[col_name], format=format_col, 
-#                                                    errors='coerce')
-#         count += 1
-#     return None
+    def split_composite_field(self,  composite_fields:list)->None:
+        if composite_fields:
+            for composite_field in composite_fields:
+                self.split_col(composite_field['composite_field'], ast.literal_eval(composite_field['new_column_list']), 
+                            composite_field['delimiter'])
+        if self.__display_stub == True:
+            print(self.__dataframe.shape)
+        return None
 
-def dp_split_column(df_dataframe: pd.DataFrame, composite_col: str, list_cols: list, delimiter: str):
-    # Split the composite column into a list of values
-    split_values = df_dataframe[composite_col].str.split(delimiter)
+    def split_col(self, composite_col: str, list_cols: list, delimiter: str):
+        # Split the composite column into a list of values
+        split_values = self.__dataframe[composite_col].str.split(delimiter)
 
-    # Create new columns from the list of values
-    for i, new_col in enumerate(list_cols):
-        df_dataframe[new_col] = split_values.str[i]
+        # Create new columns from the list of values
+        for i, new_col in enumerate(list_cols):
+            self.__dataframe[new_col] = split_values.str[i]
 
-    # Drop the original composite column
-    df_dataframe.drop(columns=[composite_col], inplace=True)
-    return None
+        # Drop the original composite column
+        self.__dataframe.drop(columns=[composite_col], inplace=True)
+        if self.__display_stub == True:
+            print(self.__dataframe.shape)
+        return None
+    
+    def dirty_data_processing(self, dirty_data_info:list)->None:
+        for dirty_data in dirty_data_info:
+            self.replace_value(ast.literal_eval(dirty_data['field_list']), dirty_data['replace_val'],  
+                                   dirty_data['replace_with'], dirty_data['like_ind'])
+        if self.__display_stub == True:
+            print(self.__dataframe.shape)
+        return None
+    
+    def replace_value (self, col_list:list[str], replace_val:any, replace_with:any,
+                        like_ind:bool=False):
+        for col_name in col_list:
+            if like_ind == False:
+                if replace_with == "None":
+                    replace_with = None
+                self.__dataframe.loc[self.__dataframe[col_name]==replace_val,col_name] = replace_with
+            else:
+                str_len = len(replace_val)
+                self.__dataframe['substring'] = self.__dataframe[col_name].str[:str_len]
+                self.__dataframe.loc[self.__dataframe['substring'].str.upper()== replace_val.upper(), col_name] = replace_with
+                util.util_rm_col(self.__dataframe,'substring')
+        if self.__display_stub == True:
+            print(self.__dataframe.shape)
+        return None 
 
-def dp_convert_datetime_to_year(df_dataframe: pd.DataFrame, list_cols:list[str], list_new_cols:list)->None:
-    count =0
-    for col_name in list_cols:
-        new_col = list_new_cols[count]
-        df_dataframe[new_col] = df_dataframe[col_name].dt.year.astype(np.int32)
-        count += 1
-    util.util_remove_col(df_dataframe, list_cols)
-    return None
+    def replace_nan_None(self)->None:
+        self.__dataframe.replace({np.nan: None},inplace=True)
+        if self.__display_stub == True:
+            print(self.__dataframe.shape)
+        return None
+
+    def rm_cols_high_missing(self, threshold)->None:
+        # Calculate the percentage of missing values for each column
+        missing_percentages = self.__dataframe.isnull().mean()
+        # Identify columns exceeding the threshold
+        columns_to_remove = missing_percentages[missing_percentages > threshold].index
+        self.__dataframe.drop(columns=columns_to_remove, inplace=True)
+        if self.__display_stub == True:
+            print(self.__dataframe.shape)
+        return None
+
+    def rm_rows_target_var(self, target_col: str) -> None:
+        # Remove rows with missing values in target columns
+        self.__dataframe.dropna(subset=target_col, inplace=True)
+        if self.__display_stub == True:
+            print(self.__dataframe.shape)
+        return None
+
+    def remove_missing(self, list_cols: list) -> None:
+        # Remove rows with missing values in specified columns
+        self.__dataframe.dropna(subset=list_cols, inplace=True)
+        if self.__display_stub == True:
+            print(self.__dataframe.shape)
+        return None
+
+    def obj_to_datetime(self, datetime_fields_info:list)->None:
+        if datetime_fields_info:
+            for datetime_field_info in datetime_fields_info:
+                col_names = ast.literal_eval(datetime_field_info['column_list'])
+                for col_name in col_names:
+                    self.__dataframe[col_name] = pd.to_datetime(self.__dataframe[col_name], format=datetime_field_info['format'], errors='coerce')
+        if self.__display_stub == True:
+            print(self.__dataframe.shape)
+        return None
+
+    def rm_id_cols(self, list_cols:list[str]):
+        util.util_rm_col(self.__dataframe, list_cols)
+        if self.__display_stub == True:
+            print(self.__dataframe.shape)
+        return None
+
+    def yyyy_from_date(self, date_yyyy_info:list)->None:
+        self.convert_datetime_to_year(ast.literal_eval(date_yyyy_info['col_list']), ast.literal_eval(date_yyyy_info['yyyy_col_list']))
+        if self.__display_stub == True:
+            print(self.__dataframe.shape)
+        return None
+
+    def convert_datetime_to_year(self, list_cols:list[str], list_new_cols:list)->None:
+        count =0
+        for col_name in list_cols:
+            new_col = list_new_cols[count]
+            self.__dataframe[new_col] = self.__dataframe[col_name].dt.year.astype(np.int32)
+            count += 1
+        util.util_rm_col(self.__dataframe, list_cols)
+        if self.__display_stub == True:
+            print(self.__dataframe.shape)
+        return None
 
         
 # class LogRegression(ModelBuild):
