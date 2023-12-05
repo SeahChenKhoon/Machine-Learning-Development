@@ -1,6 +1,24 @@
+import numpy as np
+import pandas as pd
+from imblearn.over_sampling import SMOTE
 from sklearn.model_selection import train_test_split
-def train_test_split(X, y, test_size, random_state):
-    x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=test_size , random_state=random_state)
+
+class Model_Build():
+    def __init__(self, dataframe:pd.DataFrame) -> None:
+        self.dataframe = dataframe
+
+    def SMOTE(self, X, y, random_state):
+        os = SMOTE(random_state=random_state)
+        columns = X.columns
+        return os.fit_resample(X, y)
+    
+    def prepare_data(self, target_variable):
+        X = self.dataframe.drop([target_variable], axis=1)
+        y = self.dataframe[target_variable]
+        return X, y
+
+    def train_test_split(self, X, y, test_size, random_state):
+        x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=test_size , random_state=random_state)
 
 # from sklearn.linear_model import LogisticRegression
 # from sklearn.ensemble import RandomForestClassifier

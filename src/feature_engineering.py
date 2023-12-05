@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-from imblearn.over_sampling import SMOTE
 import util
 
 class feature_engineering:
@@ -10,10 +9,8 @@ class feature_engineering:
         self.dataframe = dataframe
         return None
 
-    def SMOTE(self, X, y, random_state):
-        os = SMOTE(random_state=random_state)
-        columns = X.columns
-        return os.fit_resample(X, y)
+    def get_dataframe(self) -> pd.DataFrame:
+        return self.dataframe
 
     def convert_miles_to_KM (self,col_name:str)->None:
         self.dataframe[col_name] = abs(self.dataframe[col_name] * 1.609344)

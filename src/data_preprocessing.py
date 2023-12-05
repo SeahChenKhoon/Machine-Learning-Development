@@ -34,7 +34,6 @@ class DataProcessing:
             if dtype == 'int32':
                 self.dataframe[col_name] = self.dataframe[col_name].astype('Int32')
             elif dtype == 'float64':
-                print("hello i am here")
                 self.dataframe[col_name] = self.dataframe[col_name].astype('Float64')
         return None
 

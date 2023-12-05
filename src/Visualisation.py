@@ -41,19 +41,16 @@ def vs_countplot_target(df_dataframe: pd.DataFrame, x_col:str, hue_col:str=None)
     plt.show()
     return None
 
-def vs_pieplot(df_dataframe: pd.DataFrame, x_col:str):
+def vs_pieplot(dataset, col_name):
+    dataset = pd.DataFrame(dataset)
     # Calculate the value counts and percentages
-    value_counts = df_dataframe[x_col].value_counts()
-    percentages = (value_counts / len(df_dataframe)) * 100
-
+    value_counts = dataset[col_name].value_counts()
+    percentages = (value_counts / len(dataset)) * 100
     # Create a pie plot
     plt.figure(figsize=(4, 4))
     plt.pie(percentages, labels=percentages.index, autopct='%1.1f%%', startangle=90, colors=sns.color_palette('pastel'))
-
     # Add a title
-    plt.title('Distribution of Ticket Types')
-
-    # Show the plot
+    plt.title('Distribution of ' + col_name)
     plt.show()
 
 def vs_plot_corr_chart(df_dataframe: pd.DataFrame)->None:
