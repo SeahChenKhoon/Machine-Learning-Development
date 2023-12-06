@@ -9,9 +9,9 @@ def vs_confusion_matrix(prt_label, y_actual, y_predict, is_notebook):
     # print(y_predict.shape)
     print("\033[1m" + prt_label + "\033[0m")
     if is_notebook == True:
-        cm=confusion_matrix(y_actual, y_predict, labels=[0, 1])
-        df_cm = pd.DataFrame(cm, index = [i for i in ["Actual Blastoise","Actual Lapras"]],
-            columns = [i for i in ["Predicted Blastoise","Predicted Lapras"]])
+        cm=confusion_matrix(y_actual, y_predict, labels=[0, 1, 2])
+        df_cm = pd.DataFrame(cm, index = [i for i in ["Actual\nDeluxe","Actual\nLuxury","Actual\nStandard"]],
+            columns = [i for i in ["Predict\nDeluxe","Predict\nLuxury","Predict\nStandard"]])
         plt.figure(figsize = (7,5))
         sns.heatmap(df_cm, annot=True, fmt="d",cmap='Blues')
         plt.show()
