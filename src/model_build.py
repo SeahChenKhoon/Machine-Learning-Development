@@ -1,16 +1,25 @@
 import numpy as np
 import pandas as pd
+import Visualisation
 from imblearn.over_sampling import SMOTE
 from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import classification_report
+from sklearn import metrics
 
 class Model_Build():
     def __init__(self, dataframe:pd.DataFrame) -> None:
         self.dataframe = dataframe
 
-    def SMOTE(self, X, y, random_state):
+    def SMOTE(self, X_train, y_train, random_state):
         os = SMOTE(random_state=random_state)
-        columns = X.columns
-        return os.fit_resample(X, y)
+        columns = X_train.columns
+        os_data_X,os_data_y=os.fit_resample(X_train, y_train)
+        os_data_X = pd.DataFrame(data=os_data_X,columns=columns )
+        os_data_y= pd.DataFrame(data=os_data_y,columns=['y'])
+        return None
+
     
     def prepare_data(self, target_variable):
         X = self.dataframe.drop([target_variable], axis=1)
@@ -18,7 +27,131 @@ class Model_Build():
         return X, y
 
     def train_test_split(self, X, y, test_size, random_state):
-        x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=test_size , random_state=random_state)
+        return train_test_split(X, y, test_size=test_size , random_state=random_state)
+    
+    def prt_classification_rpt(self, prt_label, y_actual, y_pred):
+        print("\033[1m" + prt_label +" \033[0m")
+        print(classification_report(y_actual, y_pred))
+        return None
+
+    def prt_perf_score(self, prt_label, y_actual, y_pred):
+        print("\033[1m" + prt_label +" \033[0m")
+        print("Test Accuracy:",format(metrics.accuracy_score(y_actual, y_pred), '.4f'))
+        print("Test Precision:",format(metrics.precision_score(y_actual, y_pred,average='micro'), '.4f'))
+        print("Test Recall:",format(metrics.recall_score(y_actual, y_pred,average='micro'), '.4f')) 
+        return None
+
+    def model_rpt_print(self, y_train, y_train_pred, y_test, y_test_pred, is_notebook):
+        print("\033[1mClassification Report \033[0m")
+        self.prt_classification_rpt("Train", y_train, y_train_pred)
+        self.prt_classification_rpt("Test", y_test, y_test_pred)
+        print("")
+        print("\033[1mConfusion Metric\033[0m")
+        Visualisation.vs_confusion_matrix("Train", y_train, y_train_pred, is_notebook)
+        Visualisation.vs_confusion_matrix("Test", y_test, y_test_pred, is_notebook)
+        print("")
+        print("\033[1mPerformance Metrics\033[0m")
+        self.prt_perf_score("Train", y_train, y_train_pred)
+        self.prt_perf_score("Test", y_test, y_test_pred)
+        return None
+
+
+class Logistic_Regression(Model_Build):
+    def model_processing(self, X, y, test_size, random_state, hyperparameters, is_notebook):
+        X_train, X_test, y_train, y_test = self.train_test_split(X, y, test_size, random_state)
+        lr = LogisticRegression(**hyperparameters)
+        lr.fit(X_train, y_train)
+        y_train_pred = lr.predict(X_train)
+        y_test_pred = lr.predict(X_test)
+        self.model_rpt_print(y_train, y_train_pred, y_test, y_test_pred, is_notebook)
+        return None
+
+
+        # self.dataframe = dataframe
+
+
+# hyperparameter_dict = {
+#     'solver': 'liblinear'  # Specify the solver algorithm
+# }
+# train_model("Initial", X, y, hyperparameter_dict,True, False)
+# def train_model(label, X, y, hyperparameter, output_label, return_result):
+#     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1)
+#     logreg = LogisticRegression(**hyperparameter) 
+#     logreg.fit(X_train, y_train)
+    
+#     y_predict_train = logreg.predict(X_train)
+#     y_pred = logreg.predict(X_test)
+
+#     confusion_matrix_train = confusion_matrix(y_train, y_predict_train)
+#     confusion_matrix_test = confusion_matrix(y_test, y_pred)
+#     class_rpt_test = classification_report(y_test, y_pred)
+#     class_rpt_train = classification_report(y_train, y_predict_train)
+    
+#     if output_label == True:
+#         print("\033[1m" + label +" (Heart) \033[0m")
+#         print('Confusion_matrix - Train')
+#         print(confusion_matrix_train)
+
+#         print('Accuracy of logistic regression classifier on Training set: {:.4f}\n'.format(logreg.score(X_train, y_train)))
+
+#         print('\nClassification Report - Train')
+#         print(class_rpt_train)
+#         print('\n\n\n')
+        
+#         print('Confusion_matrix - Test')
+#         print(confusion_matrix_test)
+
+#         print('Accuracy of logistic regression classifier on test set: {:.4f}\n'.format(logreg.score(X_test, y_test)))
+
+#         print('\nClassification Report - Test')
+#         print(class_rpt_test)
+#         print('\n\n\n')
+        
+        
+#     if return_result == True:
+#         return logreg.score(X_test, y_test), confusion_matrix_1, classification_report(y_test, y_pred)
+#     else:
+#         return None
+
+# df_final_vars=df_final.columns.values.tolist()
+# y=['y']
+# X=[i for i in df_final_vars if i not in y]
+# from sklearn.feature_selection import RFE
+# from sklearn.linear_model import LogisticRegression
+# logreg = LogisticRegression()
+# rfe = RFE(estimator=LogisticRegression(), n_features_to_select=20)
+# rfe = rfe.fit(os_data_X, os_data_y.values.ravel())
+# print(rfe.support_)
+# print(rfe.ranking_)
+
+# X = df_final.loc[:, df_final.columns != 'y']
+# y = df_final.loc[:, df_final.columns == 'y']
+# from imblearn.over_sampling import SMOTE
+# os = SMOTE(random_state=0)
+# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
+# columns = X_train.columns
+# os_data_X,os_data_y=os.fit_resample(X_train, y_train)
+# os_data_X = pd.DataFrame(data=os_data_X,columns=columns )
+# os_data_y= pd.DataFrame(data=os_data_y,columns=['y'])
+# # we can Check the numbers of our data
+# print("length of oversampled data is ",len(os_data_X))
+# print("Number of no subscription in oversampled data",len(os_data_y[os_data_y['y']==0]))
+# print("Number of subscription",len(os_data_y[os_data_y['y']==1]))
+# print("Proportion of no subscription data in oversampled data is ",len(os_data_y[os_data_y['y']==0])/len(os_data_X))
+# print("Proportion of subscription data in oversampled data is ",len(os_data_y[os_data_y['y']==1])/len(os_data_X))
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # from sklearn.linear_model import LogisticRegression
 # from sklearn.ensemble import RandomForestClassifier

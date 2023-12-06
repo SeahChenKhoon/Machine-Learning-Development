@@ -2,6 +2,23 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
+
+def vs_confusion_matrix(prt_label, y_actual, y_predict, is_notebook):
+    print("\033[1m" + prt_label + "\033[0m")
+    if is_notebook == True:
+        cm=confusion_matrix(y_actual, y_predict, labels=[1, 0])
+
+        df_cm = pd.DataFrame(cm, index = [i for i in ["1","0"]],
+            columns = [i for i in ["Predict 1","Predict 0"]])
+        plt.figure(figsize = (5,3))
+        sns.heatmap(df_cm, annot=True)
+        plt.show()
+    else:
+        confusion_matrix(y_actual, y_predict)
+
+
+
 
 def vs_countplot_both(df_dataframe: pd.DataFrame, x_col:str, hue_col:str=None)->None:
     plt.figure(figsize=(10, 4))
