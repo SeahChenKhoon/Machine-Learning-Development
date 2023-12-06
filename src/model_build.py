@@ -13,12 +13,9 @@ class Model_Build():
         self.dataframe = dataframe
 
     def SMOTE(self, X_train, y_train, random_state):
-        os = SMOTE(random_state=random_state)
-        columns = X_train.columns
-        os_data_X,os_data_y=os.fit_resample(X_train, y_train)
-        os_data_X = pd.DataFrame(data=os_data_X,columns=columns )
-        os_data_y= pd.DataFrame(data=os_data_y,columns=['y'])
-        return None
+        smt = SMOTE(random_state=random_state)
+        os_data_X,os_data_y=smt.fit_resample(X_train, y_train)
+        return os_data_X, os_data_y
 
     
     def prepare_data(self, target_variable):
@@ -58,8 +55,12 @@ class Model_Build():
 
 class Logistic_Regression(Model_Build):
     def model_processing(self, X, y, test_size, random_state, hyperparameters, is_notebook):
-        X_train, X_test, y_train, y_test = self.train_test_split(X, y, test_size, random_state)
         lr = LogisticRegression(**hyperparameters)
+
+        X_train, X_test, y_train, y_test = self.train_test_split(X, y, test_size, random_state)
+        X_train_smote, y_train_smote = self.SMOTE(X_train, y_train, random_state)
+        X_train = X_train_smote
+        y_train = y_train_smote
         lr.fit(X_train, y_train)
         y_train_pred = lr.predict(X_train)
         y_test_pred = lr.predict(X_test)
