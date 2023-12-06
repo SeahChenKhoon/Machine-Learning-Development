@@ -4,13 +4,14 @@ import Visualisation
 from imblearn.over_sampling import SMOTE
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import classification_report
+from sklearn.tree import DecisionTreeClassifier, export_graphviz
+from sklearn.metrics import confusion_matrix, classification_report
 from sklearn import metrics
 
 class Model_Build():
     def __init__(self, dataframe:pd.DataFrame) -> None:
         self.dataframe = dataframe
+        return None
 
     def SMOTE(self, X_train, y_train, random_state):
         smt = SMOTE(random_state=random_state)
@@ -54,6 +55,7 @@ class Model_Build():
 
 
 class Logistic_Regression(Model_Build):
+    # RFE and Logit
     def model_processing(self, X, y, test_size, random_state, hyperparameters, is_notebook):
         lr = LogisticRegression(**hyperparameters)
 
@@ -67,8 +69,21 @@ class Logistic_Regression(Model_Build):
         self.model_rpt_print(y_train, y_train_pred, y_test, y_test_pred, is_notebook)
         return None
 
+# class Decision_Tree(Model_Build):
+#     def model_processing(self, X, y, test_size, random_state, hyperparameters, is_notebook):
+#         dtc = DecisionTreeClassifier(**hyperparameters)
 
-        # self.dataframe = dataframe
+#         X_train, X_test, y_train, y_test = self.train_test_split(X, y, test_size, random_state)
+#         X_train_smote, y_train_smote = self.SMOTE(X_train, y_train, random_state)
+#         X_train = X_train_smote
+#         y_train = y_train_smote
+#         dtc.fit(X_train, y_train)
+#         dot_data = export_graphviz(X_train, out_file=None, feature_names=list(X_train.columns.values), 
+#                                 class_names=[0, 1, 2], rounded=True, filled=True)
+#         y_train_pred = dtc.predict(X_train)
+#         y_test_pred = dtc.predict(X_test)
+#         self.model_rpt_print(y_train, y_train_pred, y_test, y_test_pred, is_notebook)
+#         return None
 
 
 # hyperparameter_dict = {
