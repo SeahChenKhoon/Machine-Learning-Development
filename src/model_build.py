@@ -7,10 +7,35 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier, export_graphviz
 from sklearn.metrics import confusion_matrix, classification_report
 from sklearn import metrics
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 class Model_Build():
-    def __init__(self, dataframe:pd.DataFrame) -> None:
+    def __init__(self, dataframe:pd.DataFrame, target_variable, hyperparameters, test_size, random_state, is_notebook) -> None:
         self.dataframe = dataframe
+        self.target_variable = target_variable
+        self.hyperparameters = hyperparameters
+        self.test_size = test_size
+        self.random_state = random_state
+        self.is_notebook = is_notebook
+        return None
+
+    def prepare_data(self):
+        X = self.dataframe.drop([self.target_variable], axis=1)
+        y = self.dataframe[self.target_variable]
+        return X, y
+    
+    def model_processing(self, model):
+        X, y = self.prepare_data()
+        X_train, X_test, y_train, y_test = self.train_test_split(X, y, self.test_size, self.random_state)
+        X_train_smote, y_train_smote = self.SMOTE(X_train, y_train, self.random_state)
+        X_train = X_train_smote
+        y_train = y_train_smote
+        # X_train, X_test = self.min_max_scaler(X_train, X_test)
+        X_train, X_test = self.standard_scaler(X_train, X_test)
+        model.fit(X_train, y_train)
+        y_train_pred = model.predict(X_train)
+        y_test_pred = model.predict(X_test)
+        self.model_rpt_print(y_train, y_train_pred, y_test, y_test_pred, self.is_notebook)
         return None
 
     def SMOTE(self, X_train, y_train, random_state):
@@ -18,15 +43,21 @@ class Model_Build():
         os_data_X,os_data_y=smt.fit_resample(X_train, y_train)
         return os_data_X, os_data_y
 
-    
-    def prepare_data(self, target_variable):
-        X = self.dataframe.drop([target_variable], axis=1)
-        y = self.dataframe[target_variable]
-        return X, y
-
     def train_test_split(self, X, y, test_size, random_state):
-        return train_test_split(X, y, test_size=test_size , random_state=random_state)
+        return train_test_split(X, y, test_size=test_size , random_state=random_state, stratify=y)
     
+    def min_max_scaler(self, X_train, X_test):
+        n_scaler = MinMaxScaler()
+        X_train_scaled = n_scaler.fit_transform(X_train.astype(float))
+        X_test_scaled = n_scaler.transform(X_test.astype(float))
+        return X_train_scaled, X_test_scaled
+
+    def standard_scaler(self, X_train, X_test):
+        n_scaler = StandardScaler()
+        X_train_scaled = n_scaler.fit_transform(X_train.astype(float))
+        X_test_scaled = n_scaler.transform(X_test.astype(float))
+        return X_train_scaled, X_test_scaled
+
     def prt_classification_rpt(self, prt_label, y_actual, y_pred):
         print("\033[1m" + prt_label +" \033[0m")
         print(classification_report(y_actual, y_pred))
@@ -56,17 +87,9 @@ class Model_Build():
 
 class Logistic_Regression(Model_Build):
     # RFE and Logit
-    def model_processing(self, X, y, test_size, random_state, hyperparameters, is_notebook):
-        lr = LogisticRegression(**hyperparameters)
-
-        X_train, X_test, y_train, y_test = self.train_test_split(X, y, test_size, random_state)
-        X_train_smote, y_train_smote = self.SMOTE(X_train, y_train, random_state)
-        X_train = X_train_smote
-        y_train = y_train_smote
-        lr.fit(X_train, y_train)
-        y_train_pred = lr.predict(X_train)
-        y_test_pred = lr.predict(X_test)
-        self.model_rpt_print(y_train, y_train_pred, y_test, y_test_pred, is_notebook)
+    def model_processing(self):
+        lr = LogisticRegression(**self.hyperparameters)
+        super().model_processing(lr)
         return None
 
 # class Decision_Tree(Model_Build):
