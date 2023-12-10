@@ -12,17 +12,16 @@ class DataProcessing:
     def get_dataframe(self) -> pd.DataFrame:
         return self.dataframe
 
-    def impute_missing_value(self,col_list, impute_type,unique_values=None):
-        if impute_type == "random" and unique_values == None:
+    def impute_missing_value_info (self, impute_missing_val_info)->None:
+        for impute_missing_val in impute_missing_val_info:
+            self.convert_number(impute_missing_val['impute_type'], impute_missing_val['col_list'])
+
+    def impute_missing_value(self,col_list, impute_type):
+        if impute_type == "random":
             # Set a seed for reproducibility
             np.random.seed(42)
             for col_name in col_list:
                 unique_values = self.dataframe[col_name].dropna().unique()
-                self.dataframe[col_name] = self.dataframe[col_name].apply(lambda x: np.random.choice(unique_values) if pd.isnull(x) else x)
-                missing_mask = self.dataframe[col_name].isnull()
-        elif impute_type == "random":
-            np.random.seed(42)
-            for col_name in col_list:
                 self.dataframe[col_name] = self.dataframe[col_name].apply(lambda x: np.random.choice(unique_values) if pd.isnull(x) else x)
                 missing_mask = self.dataframe[col_name].isnull()
         elif impute_type=="mode":

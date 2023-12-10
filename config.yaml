@@ -88,3 +88,14 @@ convert_date_yyyy:
   col_list: "['Date of Birth','Logging']"
   yyyy_col_list: "['Year of Birth','Year of Logging']"
 
+impute_missing_value:
+  - impute_type: "random"
+    col_list: "['Gender','Online Check-in','Baggage handling','Cleanliness']"
+  - impute_type: "mode"
+    col_list: "['Cruise Name','Onboard Wifi Service', 'Ease of Online booking', 'Embarkation/Disembarkation time convenient', 'Gate location', 
+    'Onboard Dining Service','Cabin Comfort','Onboard Entertainment', 'Cabin service','Port Check-in Service','Onboard Service']"
+  - impute_type: "mean"
+    col_list: "['Distance']"
+
+one_hot_encode: "['Traffic']"
+  
