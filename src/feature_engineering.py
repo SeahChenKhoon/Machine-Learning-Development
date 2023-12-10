@@ -12,6 +12,10 @@ class feature_engineering:
     def get_dataframe(self) -> pd.DataFrame:
         return self.dataframe
 
+    def one_hot_key_encode(self, col_names:list[str]):
+        self.dataframe = pd.get_dummies(self.dataframe, columns=col_names, drop_first=True)
+        return None
+
     def convert_miles_to_KM (self,col_name:str)->None:
         self.dataframe[col_name] = abs(self.dataframe[col_name] * 1.609344)
         return None

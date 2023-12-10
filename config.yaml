@@ -34,9 +34,7 @@ convert_obj_datetime:
 
 pct_missing_threshold: 0.4
 
-continuous_variables: "['Date of Birth', 'Distance', 'Logging']"
-
-
+continuous_variables: "['Date of Birth', 'Logging']"
 
 dirty_data_setting:
   - field_list: "['Gender']"

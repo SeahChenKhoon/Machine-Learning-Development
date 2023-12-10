@@ -12,6 +12,28 @@ class DataProcessing:
     def get_dataframe(self) -> pd.DataFrame:
         return self.dataframe
 
+    def impute_missing_value(self,col_list, impute_type,unique_values=None):
+        if impute_type == "random" and unique_values == None:
+            # Set a seed for reproducibility
+            np.random.seed(42)
+            for col_name in col_list:
+                unique_values = self.dataframe[col_name].dropna().unique()
+                self.dataframe[col_name] = self.dataframe[col_name].apply(lambda x: np.random.choice(unique_values) if pd.isnull(x) else x)
+                missing_mask = self.dataframe[col_name].isnull()
+        elif impute_type == "random":
+            np.random.seed(42)
+            for col_name in col_list:
+                self.dataframe[col_name] = self.dataframe[col_name].apply(lambda x: np.random.choice(unique_values) if pd.isnull(x) else x)
+                missing_mask = self.dataframe[col_name].isnull()
+        elif impute_type=="mode":
+            for col_name in col_list:
+                mode_gender = self.dataframe[col_name].mode().iloc[0]
+                self.dataframe[col_name].fillna(mode_gender, inplace=True)
+        elif impute_type=="mean":
+            for col_name in col_list:
+                self.dataframe[col_name].fillna(self.dataframe[col_name].mean(), inplace=True)
+        return None
+
     def label_encoder(self, list_cols: list) -> None:
         label_encoder = LabelEncoder()
         
