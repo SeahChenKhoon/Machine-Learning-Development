@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import Visualisation
+import pydotplus
 from imblearn.over_sampling import SMOTE
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
@@ -17,26 +18,31 @@ class Model_Build():
         self.test_size = test_size
         self.random_state = random_state
         self.is_notebook = is_notebook
+        self.X = None
+        self.y = None
         return None
 
     def prepare_data(self):
         X = self.dataframe.drop([self.target_variable], axis=1)
         y = self.dataframe[self.target_variable]
-        return X, y
+        self.X = X
+        self.y = y
+        return None
     
     def model_processing(self, model):
-        X, y = self.prepare_data()
-        X_train, X_test, y_train, y_test = self.train_test_split(X, y, self.test_size, self.random_state)
+        self.prepare_data()
+
+        X_train, X_test, y_train, y_test = self.train_test_split(self.X, self.y, self.test_size, self.random_state)
         X_train_smote, y_train_smote = self.SMOTE(X_train, y_train, self.random_state)
         X_train = X_train_smote
         y_train = y_train_smote
         # X_train, X_test = self.min_max_scaler(X_train, X_test)
         X_train, X_test = self.standard_scaler(X_train, X_test)
-        model.fit(X_train, y_train)
+        model_train = model.fit(X_train, y_train)
         y_train_pred = model.predict(X_train)
         y_test_pred = model.predict(X_test)
         self.model_rpt_print(y_train, y_train_pred, y_test, y_test_pred, self.is_notebook)
-        return None
+        return model_train
 
     def SMOTE(self, X_train, y_train, random_state):
         smt = SMOTE(random_state=random_state)
@@ -84,6 +90,8 @@ class Model_Build():
         self.prt_perf_score("Test", y_test, y_test_pred)
         return None
 
+    def return_X(self):
+        return self.X
 
 class Logistic_Regression(Model_Build):
     # RFE and Logit
@@ -92,6 +100,12 @@ class Logistic_Regression(Model_Build):
         super().model_processing(lr)
         return None
 
+class Decision_Tree_Classifier(Model_Build):
+    def model_processing(self):
+        dtc = DecisionTreeClassifier(**self.hyperparameters)
+        dtc_train = super().model_processing(dtc)
+        return dtc_train
+    
 # class Decision_Tree(Model_Build):
 #     def model_processing(self, X, y, test_size, random_state, hyperparameters, is_notebook):
 #         dtc = DecisionTreeClassifier(**hyperparameters)
