@@ -9,6 +9,7 @@ from sklearn.tree import DecisionTreeClassifier, export_graphviz
 from sklearn.metrics import confusion_matrix, classification_report
 from sklearn import metrics
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from sklearn.model_selection import GridSearchCV
 
 class Model_Build():
     def __init__(self, dataframe:pd.DataFrame, target_variable, hyperparameters, test_size, random_state, is_notebook) -> None:
@@ -22,17 +23,16 @@ class Model_Build():
         self.y = None
         return None
 
+
     def prepare_data(self):
         X = self.dataframe.drop([self.target_variable], axis=1)
         y = self.dataframe[self.target_variable]
         self.X = X
         self.y = y
-        return None
+        return self.train_test_split(self.X, self.y, self.test_size, self.random_state)
     
     def model_processing(self, model):
-        self.prepare_data()
-
-        X_train, X_test, y_train, y_test = self.train_test_split(self.X, self.y, self.test_size, self.random_state)
+        X_train, X_test, y_train, y_test =  self.prepare_data()
         X_train_smote, y_train_smote = self.SMOTE(X_train, y_train, self.random_state)
         X_train = X_train_smote
         y_train = y_train_smote
@@ -43,6 +43,13 @@ class Model_Build():
         y_test_pred = model.predict(X_test)
         self.model_rpt_print(y_train, y_train_pred, y_test, y_test_pred, self.is_notebook)
         return model_train
+
+    def GridSearchCV(self, model, param_grid, verbose):
+        grid = GridSearchCV(model,  param_grid, verbose = verbose)
+        X_train, X_test, y_train, y_test =  self.prepare_data()
+        grid.fit(X_train,y_train)
+        print(grid.best_estimator_)
+        return grid
 
     def SMOTE(self, X_train, y_train, random_state):
         smt = SMOTE(random_state=random_state)
@@ -99,13 +106,26 @@ class Logistic_Regression(Model_Build):
         lr = LogisticRegression(**self.hyperparameters)
         super().model_processing(lr)
         return None
+    
+
+    def GridSearchCV(self, param_grid, verbose):
+        lr = LogisticRegression(**self.hyperparameters)
+        super().GridSearchCV(lr, param_grid, verbose)        
+
 
 class Decision_Tree_Classifier(Model_Build):
     def model_processing(self):
         dtc = DecisionTreeClassifier(**self.hyperparameters)
         dtc_train = super().model_processing(dtc)
         return dtc_train
-    
+
+    def GridSearchCV(self, param_grid, verbose):
+        dtc = DecisionTreeClassifier(**self.hyperparameters)
+        grid = super().GridSearchCV(dtc, param_grid, verbose)     
+        super().model_processing(grid)
+        return None
+
+
 # class Decision_Tree(Model_Build):
 #     def model_processing(self, X, y, test_size, random_state, hyperparameters, is_notebook):
 #         dtc = DecisionTreeClassifier(**hyperparameters)
