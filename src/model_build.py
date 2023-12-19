@@ -1,15 +1,16 @@
 import numpy as np
 import pandas as pd
 import Visualisation
-import pydotplus
 from imblearn.over_sampling import SMOTE
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier, export_graphviz
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.metrics import confusion_matrix, classification_report
 from sklearn import metrics
+from sklearn.svm import SVC
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 
 class Model_Build():
     def __init__(self, dataframe:pd.DataFrame, target_variable, hyperparameters, test_size, random_state, is_notebook) -> None:
@@ -34,9 +35,12 @@ class Model_Build():
     def model_processing(self, model):
         X_train, X_test, y_train, y_test =  self.prepare_data()
         X_train_smote, y_train_smote = self.SMOTE(X_train, y_train, self.random_state)
+        X_test_smote, y_test_smote = self.SMOTE(X_test, y_test, self.random_state)
         X_train = X_train_smote
         y_train = y_train_smote
-        # X_train, X_test = self.min_max_scaler(X_train, X_test)
+        X_test = X_test_smote
+        y_test = y_test_smote
+        X_train, X_test = self.min_max_scaler(X_train, X_test)
         X_train, X_test = self.standard_scaler(X_train, X_test)
         model_train = model.fit(X_train, y_train)
         y_train_pred = model.predict(X_train)
@@ -44,12 +48,6 @@ class Model_Build():
         self.model_rpt_print(y_train, y_train_pred, y_test, y_test_pred, self.is_notebook)
         return model_train
 
-    def GridSearchCV(self, model, param_grid, verbose):
-        grid = GridSearchCV(model,  param_grid, verbose = verbose)
-        X_train, X_test, y_train, y_test =  self.prepare_data()
-        grid.fit(X_train,y_train)
-        print(grid.best_estimator_)
-        return grid
 
     def SMOTE(self, X_train, y_train, random_state):
         smt = SMOTE(random_state=random_state)
@@ -99,6 +97,37 @@ class Model_Build():
 
     def return_X(self):
         return self.X
+    
+    def GridSearchCV(self, model, param_grid, verbose):
+        grid = GridSearchCV(model,  param_grid, verbose = verbose)
+        X_train, X_test, y_train, y_test =  self.prepare_data()
+        grid.fit(X_train,y_train)
+        print(grid.best_estimator_)
+        return grid
+    
+    def RandomizedSearchCV(self, model: any,
+                     param_grid: dict,verbose,
+        ) -> None:
+        # Define RandomSearchCV
+        random_search = RandomizedSearchCV(
+            model,
+            param_distributions=param_grid,
+            n_iter=50,  # Specify the number of iterations here
+            scoring='balanced_accuracy',
+            cv=3,
+            random_state=self.random_state,
+            verbose=verbose
+        )
+        X_train, X_test, y_train, y_test =  self.prepare_data()
+
+        # Fit random_search
+        random_search.fit(X_train, y_train)
+        print("Random Search Best Params")
+        print(random_search.best_params_)
+        print("Random Search Best Estimators")
+        print(random_search.best_estimator_)
+        # Get best params and model
+        return (random_search.best_params_)
 
 class Logistic_Regression(Model_Build):
     # RFE and Logit
@@ -107,11 +136,16 @@ class Logistic_Regression(Model_Build):
         super().model_processing(lr)
         return None
     
-
     def GridSearchCV(self, param_grid, verbose):
         lr = LogisticRegression(**self.hyperparameters)
-        super().GridSearchCV(lr, param_grid, verbose)        
+        grid = super().GridSearchCV(lr, param_grid, verbose)
+        super().model_processing(grid)
 
+    def RandomizedSearchCV(self, param_grid, verbose):
+        lr = SVC(**self.hyperparameters)
+        grid = super().RandomizedSearchCV(lr, param_grid, verbose)     
+        super().model_processing(grid)
+        return None
 
 class Decision_Tree_Classifier(Model_Build):
     def model_processing(self):
@@ -124,209 +158,61 @@ class Decision_Tree_Classifier(Model_Build):
         grid = super().GridSearchCV(dtc, param_grid, verbose)     
         super().model_processing(grid)
         return None
-
-
-# class Decision_Tree(Model_Build):
-#     def model_processing(self, X, y, test_size, random_state, hyperparameters, is_notebook):
-#         dtc = DecisionTreeClassifier(**hyperparameters)
-
-#         X_train, X_test, y_train, y_test = self.train_test_split(X, y, test_size, random_state)
-#         X_train_smote, y_train_smote = self.SMOTE(X_train, y_train, random_state)
-#         X_train = X_train_smote
-#         y_train = y_train_smote
-#         dtc.fit(X_train, y_train)
-#         dot_data = export_graphviz(X_train, out_file=None, feature_names=list(X_train.columns.values), 
-#                                 class_names=[0, 1, 2], rounded=True, filled=True)
-#         y_train_pred = dtc.predict(X_train)
-#         y_test_pred = dtc.predict(X_test)
-#         self.model_rpt_print(y_train, y_train_pred, y_test, y_test_pred, is_notebook)
-#         return None
-
-
-# hyperparameter_dict = {
-#     'solver': 'liblinear'  # Specify the solver algorithm
-# }
-# train_model("Initial", X, y, hyperparameter_dict,True, False)
-# def train_model(label, X, y, hyperparameter, output_label, return_result):
-#     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1)
-#     logreg = LogisticRegression(**hyperparameter) 
-#     logreg.fit(X_train, y_train)
     
-#     y_predict_train = logreg.predict(X_train)
-#     y_pred = logreg.predict(X_test)
-
-#     confusion_matrix_train = confusion_matrix(y_train, y_predict_train)
-#     confusion_matrix_test = confusion_matrix(y_test, y_pred)
-#     class_rpt_test = classification_report(y_test, y_pred)
-#     class_rpt_train = classification_report(y_train, y_predict_train)
+    def RandomizedSearchCV(self, param_grid, verbose):
+        dtc = DecisionTreeClassifier(**self.hyperparameters)
+        grid = super().RandomizedSearchCV(dtc, param_grid, verbose)     
+        # super().model_processing(grid)
+        return None
     
-#     if output_label == True:
-#         print("\033[1m" + label +" (Heart) \033[0m")
-#         print('Confusion_matrix - Train')
-#         print(confusion_matrix_train)
+class Random_Forest_Classifier(Model_Build):
+    def model_processing(self):
+        rfc = RandomForestClassifier(**self.hyperparameters)
+        super().model_processing(rfc)
+        return None
 
-#         print('Accuracy of logistic regression classifier on Training set: {:.4f}\n'.format(logreg.score(X_train, y_train)))
+    def GridSearchCV(self, param_grid, verbose):
+        rfc = RandomForestClassifier(**self.hyperparameters)
+        grid = super().GridSearchCV(rfc, param_grid, verbose)     
+        super().model_processing(grid)
+        return None
 
-#         print('\nClassification Report - Train')
-#         print(class_rpt_train)
-#         print('\n\n\n')
-        
-#         print('Confusion_matrix - Test')
-#         print(confusion_matrix_test)
+    def RandomizedSearchCV(self, param_grid, verbose):
+        rfc = RandomForestClassifier(**self.hyperparameters)
+        grid = super().RandomizedSearchCV(rfc, param_grid, verbose)     
+        return None
 
-#         print('Accuracy of logistic regression classifier on test set: {:.4f}\n'.format(logreg.score(X_test, y_test)))
+class Support_Vector_Classifier(Model_Build):
+    def model_processing(self):
+        svc = SVC(**self.hyperparameters)
+        super().model_processing(svc)
+        return None
 
-#         print('\nClassification Report - Test')
-#         print(class_rpt_test)
-#         print('\n\n\n')
-        
-        
-#     if return_result == True:
-#         return logreg.score(X_test, y_test), confusion_matrix_1, classification_report(y_test, y_pred)
-#     else:
-#         return None
-
-# df_final_vars=df_final.columns.values.tolist()
-# y=['y']
-# X=[i for i in df_final_vars if i not in y]
-# from sklearn.feature_selection import RFE
-# from sklearn.linear_model import LogisticRegression
-# logreg = LogisticRegression()
-# rfe = RFE(estimator=LogisticRegression(), n_features_to_select=20)
-# rfe = rfe.fit(os_data_X, os_data_y.values.ravel())
-# print(rfe.support_)
-# print(rfe.ranking_)
-
-# X = df_final.loc[:, df_final.columns != 'y']
-# y = df_final.loc[:, df_final.columns == 'y']
-# from imblearn.over_sampling import SMOTE
-# os = SMOTE(random_state=0)
-# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
-# columns = X_train.columns
-# os_data_X,os_data_y=os.fit_resample(X_train, y_train)
-# os_data_X = pd.DataFrame(data=os_data_X,columns=columns )
-# os_data_y= pd.DataFrame(data=os_data_y,columns=['y'])
-# # we can Check the numbers of our data
-# print("length of oversampled data is ",len(os_data_X))
-# print("Number of no subscription in oversampled data",len(os_data_y[os_data_y['y']==0]))
-# print("Number of subscription",len(os_data_y[os_data_y['y']==1]))
-# print("Proportion of no subscription data in oversampled data is ",len(os_data_y[os_data_y['y']==0])/len(os_data_X))
-# print("Proportion of subscription data in oversampled data is ",len(os_data_y[os_data_y['y']==1])/len(os_data_X))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# from sklearn.linear_model import LogisticRegression
-# from sklearn.ensemble import RandomForestClassifier
-# from sklearn.model_selection import RandomizedSearchCV
-# import xgboost as xgb
-# import pandas as pd
-# import numpy as np
-# import util
-
-# class ModelBuild:
-#     def __init__(self, model_name, X_train:np.ndarray, X_test:np.ndarray, y_train:pd.Series, y_test:pd.Series, 
-#                   hyperparameter_enabled:bool, hyperparameter_tuning:list) -> None:
-#         """
-#         """
-#         self.model_name =  model_name
-#         self.X_train:np.ndarray = X_train
-#         self.X_test:np.ndarray = X_test
-#         self.y_train:pd.Series = y_train
-#         self.y_test:pd.Series = y_test
-#         self.hyperparameter_enabled:bool = hyperparameter_enabled
-#         if hyperparameter_tuning == None:
-#             self.hyperparameter_tuning = None
-#         else:
-#             self.hyperparameter_tuning:dict = dict()
-#             for key, values in hyperparameter_tuning.items():
-#                 self.hyperparameter_tuning[key] = values
-#         return None
-
-#     def modelling(self)->tuple[np.ndarray, np.ndarray]:
-#         """
-#         Train the model and make predictions on training and testing data.
-
-#         This method fits the model to the training data, makes predictions on both the training
-#         and testing data, and returns the predicted values for training and testing sets.
-
-#         Returns:
-#             Tuple[np.ndarray, np.ndarray]: A tuple containing two NumPy arrays:
-#                 - y_train_pred: Predicted values for the training set.
-#                 - y_test_pred: Predicted values for the testing set.
-#         """
-#         self.model.fit(self.X_train, self.y_train)
-#         y_train_pred = self.model.predict(self.X_train)
-
-#         self.model.fit(self.X_test, self.y_test)
-#         y_test_pred = self.model.predict(self.X_test)
-
-#         return y_train_pred, y_test_pred
+    def GridSearchCV(self, param_grid, verbose):
+        svc = SVC(**self.hyperparameters)
+        grid = super().GridSearchCV(svc, param_grid, verbose)     
+        super().model_processing(grid)
+        return None
     
-#     def process_hyperparameter(self, x:np.ndarray,  y:pd.Series)->None:
-#         """
-#         Perform hyperparameter tuning using Randomized Search Cross-Validation.
+    def RandomizedSearchCV(self, param_grid, verbose):
+        svc = SVC(**self.hyperparameters)
+        grid = super().RandomizedSearchCV(svc, param_grid, verbose)     
+        super().model_processing(grid)
+        return None
 
-#         This method conducts hyperparameter tuning using Randomized Search Cross-Validation,
-#         where it searches for the best hyperparameters for the model. It prints the best estimator
-#         and best parameters found during the search.
-
-#         Parameters:
-#             x (np.ndarray): The feature matrix.
-#             y (pd.Series): The target variable.
-
-#         Returns:
-#             None: This method does not return a value.
-#         """
-
-#         if self.hyperparameter_enabled==True and self.hyperparameter_tuning!=None:
-#             random_search = RandomizedSearchCV(estimator=self.model, param_distributions=self.hyperparameter_tuning,cv=5, 
-#                                             verbose=3,n_jobs=-1)
-#             start_time = util.timer(None)
-#             random_search.fit(x, y) 
-#             start_time = util.timer(start_time)
-#             print(random_search.best_estimator_)
-#             print(random_search.best_params_)
-#         return None
-
-# class LogRegression(ModelBuild):
-#     def __init__(self, model_name, X_train:np.ndarray, X_test:np.ndarray, y_train:pd.Series, 
-#                  y_test:pd.Series, hyperparameter_enabled:bool, hyperparameter_tuning:list)->None:
-#         """
-#         Initialize an instance of the class.
-#         """
-#         self.model = LogisticRegression()
-#         self.hyperparameter = None
-#         super().__init__(model_name, X_train, X_test, y_train, y_test,  hyperparameter_enabled, hyperparameter_tuning)
-#         return None
-
-# class RandForest(ModelBuild):
-#     def __init__(self, model_name, X_train:np.ndarray, X_test:np.ndarray, y_train:pd.Series, 
-#                  y_test:pd.Series,  hyperparameter_enabled:bool, hyperparameter_tuning:list):
-#         """
-#         Initialize an instance of the class.
-#         """
-#         self.model = RandomForestClassifier()
-#         self.hyperparameter = None
-#         super().__init__(model_name, X_train, X_test, y_train, y_test,  hyperparameter_enabled, hyperparameter_tuning)
-#         return None
-
-# class XgBoost(ModelBuild):
-#     def __init__(self, model_name, X_train:np.ndarray, X_test:np.ndarray, y_train:pd.Series, 
-#                  y_test:pd.Series, hyperparameter_enabled:bool, hyperparameter_tuning:list):
-#         """
-#         Initialize an instance of the class.
-#         """
-#         self.model = xgb.XGBClassifier()
-#         super().__init__(model_name, X_train, X_test, y_train, y_test,  hyperparameter_enabled, hyperparameter_tuning)
-#         return None
+class Gradient_Boosting_Classifier(Model_Build):
+    def model_processing(self):
+        gbc = GradientBoostingClassifier(**self.hyperparameters)
+        super().model_processing(gbc)
+        return None
+    
+    def GridSearchCV(self, param_grid, verbose):
+        gbc = GradientBoostingClassifier(**self.hyperparameters)
+        grid = super().GridSearchCV(gbc, param_grid, verbose)     
+        super().model_processing(grid)
+        return None
+    
+    def RandomizedSearchCV(self, param_grid, verbose):
+        gbc = GradientBoostingClassifier(**self.hyperparameters)
+        super().RandomizedSearchCV(gbc, param_grid, verbose)     
+        return None
