@@ -5,9 +5,9 @@ import ast
 from sklearn.preprocessing import LabelEncoder
 
 class DataProcessing:
-    def __init__(self, dataframe:pd.DataFrame, display_stub) -> None:
-        self.dataframe = dataframe
-        self.__display_stub = display_stub
+    # def __init__(self, dataframe:pd.DataFrame, display_stub) -> None:
+    #     self.dataframe = dataframe
+    #     self.__display_stub = display_stub
 
     def get_dataframe(self) -> pd.DataFrame:
         return self.dataframe
@@ -78,28 +78,24 @@ class DataProcessing:
                 print(self.dataframe.shape)
         return None
 
-    def split_composite_field(self,  composite_fields:list)->None:
+    def split_composite_field(self,  dataframe, composite_fields:list)->None:
         if composite_fields:
             for composite_field in composite_fields:
-                self.split_col(composite_field['composite_field'], ast.literal_eval(composite_field['new_column_list']), 
+                self.split_col(dataframe,composite_field['composite_field'], ast.literal_eval(composite_field['new_column_list']), 
                             composite_field['delimiter'])
-        if self.__display_stub == True:
-            print(self.dataframe.shape)
-        return None
+        return dataframe
 
-    def split_col(self, composite_col: str, list_cols: list, delimiter: str):
+    def split_col(self, dataframe, composite_col: str, list_cols: list, delimiter: str):
         # Split the composite column into a list of values
-        split_values = self.dataframe[composite_col].str.split(delimiter)
+        split_values = dataframe[composite_col].str.split(delimiter)
 
         # Create new columns from the list of values
         for i, new_col in enumerate(list_cols):
-            self.dataframe[new_col] = split_values.str[i]
+            dataframe[new_col] = split_values.str[i]
 
         # Drop the original composite column
-        self.dataframe.drop(columns=[composite_col], inplace=True)
-        if self.__display_stub == True:
-            print(self.dataframe.shape)
-        return None
+        dataframe.drop(columns=[composite_col], inplace=True)
+        return dataframe
     
     def dirty_data_processing(self, dirty_data_info:list)->None:
         for dirty_data in dirty_data_info:
@@ -125,11 +121,9 @@ class DataProcessing:
             print(self.dataframe.shape)
         return None 
 
-    def replace_nan_none(self)->None:
-        self.dataframe.replace({np.nan: None},inplace=True)
-        if self.__display_stub == True:
-            print(self.dataframe.shape)
-        return None
+    def replace_nan_none(self, df)->None:
+        df.replace({np.nan: None},inplace=True)
+        return df
 
     def rm_cols_high_missing(self, threshold)->None:
         # Calculate the percentage of missing values for each column
@@ -165,11 +159,9 @@ class DataProcessing:
             print(self.dataframe.shape)
         return None
 
-    def rm_id_cols(self, list_cols:list[str]):
-        util.util_rm_col(self.dataframe, list_cols)
-        if self.__display_stub == True:
-            print(self.dataframe.shape)
-        return None
+    def rm_id_cols(self, dataframe, list_cols:list[str]):
+        util.util_rm_col(dataframe, list_cols)
+        return dataframe
 
     def yyyy_from_date(self, date_yyyy_info:list)->None:
         self.convert_datetime_to_year(ast.literal_eval(date_yyyy_info['col_list']), ast.literal_eval(date_yyyy_info['yyyy_col_list']))
