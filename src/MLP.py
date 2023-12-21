@@ -36,6 +36,18 @@ class SplitCompositeFields(BaseEstimator, TransformerMixin):
         dataprocessor.split_composite_field(X, self.composite_fields_info)
         return X  
 
+class RemoveColumnWithHighMissingVal(BaseEstimator, TransformerMixin):
+    def __init__(self, missing_val_threshold) -> None:
+        super().__init__()
+        self.missing_val_threshold = missing_val_threshold
+    
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        dataprocessor.rm_cols_high_missing(X, self.missing_val_threshold)
+        return X  
+
 class RemoveIDsCols(BaseEstimator, TransformerMixin):
     def __init__(self, id_cols) -> None:
         super().__init__()
@@ -47,7 +59,35 @@ class RemoveIDsCols(BaseEstimator, TransformerMixin):
     def transform(self, X):
         dataprocessor.rm_id_cols(X, self.id_cols)
         return X 
-    
+
+class ConvertObjToDateTime(BaseEstimator, TransformerMixin):
+    def __init__(self, datetime_fields_info) -> None:
+        super().__init__()
+        self.datetime_fields_info = datetime_fields_info
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        dataprocessor.obj_to_datetime(X, self.datetime_fields_info)
+        return X 
+
+class ConvertObjToNumeric(BaseEstimator, TransformerMixin):
+    def __init__(self, numeric_field_info) -> None:
+        super().__init__()
+        self.numeric_field_info = numeric_field_info
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        dataprocessor.obj_to_datetime(X, self.numeric_field_info)
+        return X 
+
+# ('numeric_conversion', ConvertObjToNumeric(NUMERIC_FIELD_INFO))
+# dp.numeric_conversion(df_cruise, NUMERIC_FIELD_INFO)
+
+
 def main():
     # Read YAML file
     yaml_data = util.read_yaml(YAML_FILEPATHNAME)
@@ -88,12 +128,16 @@ def main():
     data_cleaning_pipeline = Pipeline(steps=[
         ('none_to_null', ConvertNanToNone()),
         ('split_composite_fields', SplitCompositeFields(COMPOSITE_FIELD_INFO)),
-        ('remove_id_cols', RemoveIDsCols(ID_FIELDS))
+        ('remove_id_cols', RemoveIDsCols(ID_FIELDS)),
+        ('missing_val_threshold', RemoveColumnWithHighMissingVal(MISSING_VAL_THRESHOLD)),
+        ('obj_to_datetime', ConvertObjToDateTime(DATETIME_FIELD_INFO))
+        # ,
+        # ('numeric_conversion', ConvertObjToNumeric(NUMERIC_FIELD_INFO))
     ])
     
     df_cruise = data_cleaning_pipeline.transform(df_cruise)
     print("FINAL PRINTOUT")
-    print(df_cruise.head())
+    print(df_cruise.info())
 
 if __name__ == "__main__":
     main()

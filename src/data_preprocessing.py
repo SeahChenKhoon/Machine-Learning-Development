@@ -125,14 +125,12 @@ class DataProcessing:
         df.replace({np.nan: None},inplace=True)
         return df
 
-    def rm_cols_high_missing(self, threshold)->None:
+    def rm_cols_high_missing(self, df, threshold)->None:
         # Calculate the percentage of missing values for each column
-        missing_percentages = self.dataframe.isnull().mean()
+        missing_percentages = df.isnull().mean()
         # Identify columns exceeding the threshold
         columns_to_remove = missing_percentages[missing_percentages > threshold].index
-        self.dataframe.drop(columns=columns_to_remove, inplace=True)
-        if self.__display_stub == True:
-            print(self.dataframe.shape)
+        df.drop(columns=columns_to_remove, inplace=True)
         return None
 
     def rm_rows_target_var(self, target_col: str) -> None:
@@ -149,15 +147,13 @@ class DataProcessing:
             print(self.dataframe.shape)
         return None
 
-    def obj_to_datetime(self, datetime_fields_info:list)->None:
+    def obj_to_datetime(self, df, datetime_fields_info:list)->None:
         if datetime_fields_info:
             for datetime_field_info in datetime_fields_info:
                 col_names = ast.literal_eval(datetime_field_info['column_list'])
                 for col_name in col_names:
-                    self.dataframe[col_name] = pd.to_datetime(self.dataframe[col_name], format=datetime_field_info['format'], errors='coerce')
-        if self.__display_stub == True:
-            print(self.dataframe.shape)
-        return None
+                    df[col_name] = pd.to_datetime(df[col_name], format=datetime_field_info['format'], errors='coerce')
+        return df
 
     def rm_id_cols(self, dataframe, list_cols:list[str]):
         util.util_rm_col(dataframe, list_cols)
