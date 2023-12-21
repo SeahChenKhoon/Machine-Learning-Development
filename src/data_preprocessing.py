@@ -131,11 +131,9 @@ class DataProcessing:
         df.drop(columns=columns_to_remove, inplace=True)
         return None
 
-    def rm_rows_target_var(self, target_col: str) -> None:
+    def rm_rows_target_var(self, df, target_col: str) -> None:
         # Remove rows with missing values in target columns
-        self.dataframe.dropna(subset=target_col, inplace=True)
-        if self.__display_stub == True:
-            print(self.dataframe.shape)
+        df.dropna(subset=target_col, inplace=True)
         return None
 
     def remove_missing(self, list_cols: list) -> None:

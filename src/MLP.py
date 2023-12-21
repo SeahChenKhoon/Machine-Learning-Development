@@ -84,6 +84,18 @@ class ConvertObjToNumeric(BaseEstimator, TransformerMixin):
         dataprocessor.numeric_conversion(X, self.numeric_field_info)
         return X 
 
+class RemoveMissingRowsInTargetVariable(BaseEstimator, TransformerMixin):
+    def __init__(self, target_variable) -> None:
+        super().__init__()
+        self.target_variable = target_variable
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        dataprocessor.rm_rows_target_var(X, self.target_variable)
+        return X 
+    
 # ('numeric_conversion', ConvertObjToNumeric(NUMERIC_FIELD_INFO))
 # dp.numeric_conversion(df_cruise, NUMERIC_FIELD_INFO)
 
@@ -131,9 +143,9 @@ def main():
         ('remove_id_cols', RemoveIDsCols(ID_FIELDS)),
         ('missing_val_threshold', RemoveColumnWithHighMissingVal(MISSING_VAL_THRESHOLD)),
         ('obj_to_datetime', ConvertObjToDateTime(DATETIME_FIELD_INFO)),
-        ('numeric_conversion', ConvertObjToNumeric(NUMERIC_FIELD_INFO))
+        ('numeric_conversion', ConvertObjToNumeric(NUMERIC_FIELD_INFO)),
+        ('rm_rows_target_var', RemoveMissingRowsInTargetVariable(TARGET_VARIABLE))
     ])
-    
     df_cruise = data_cleaning_pipeline.transform(df_cruise)
     print("FINAL PRINTOUT")
     print(df_cruise.info())
