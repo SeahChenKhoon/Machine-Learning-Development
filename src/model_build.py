@@ -37,9 +37,6 @@ class Model_Build():
         X_train_smote, y_train_smote = self.SMOTE(X_train, y_train, self.random_state)
         X_train = X_train_smote
         y_train = y_train_smote
-        X_test_smote, y_test_smote = self.SMOTE(X_test, y_test, self.random_state)
-        X_test = X_test_smote
-        y_test = y_test_smote
         # X_train, X_test = self.min_max_scaler(X_train, X_test)
         X_train, X_test = self.standard_scaler(X_train, X_test)
         model_train = model.fit(X_train, y_train)

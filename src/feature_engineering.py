@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import seaborn as sns
+import ast
 import matplotlib.pyplot as plt
 import util
 
@@ -9,6 +10,21 @@ class feature_engineering:
         self.dataframe = dataframe
         return None
 
+    def yyyy_from_date(self, date_yyyy_info:list)->None:
+        self.convert_datetime_to_year(ast.literal_eval(date_yyyy_info['col_list']), ast.literal_eval(date_yyyy_info['yyyy_col_list']))
+        return None
+
+    def convert_datetime_to_year(self, list_cols:list[str], list_new_cols:list)->None:
+        count =0
+        for col_name in list_cols:
+            new_col = list_new_cols[count]
+            self.dataframe[new_col] = self.dataframe[col_name].dt.year.astype(np.int32)
+            count += 1
+        util.util_rm_col(self.dataframe, list_cols)
+        if self.__display_stub == True:
+            print(self.dataframe.shape)
+        return None
+    
     def get_dataframe(self) -> pd.DataFrame:
         return self.dataframe
 

@@ -33,7 +33,7 @@ class SplitCompositeFields(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        dataprocessor.split_composite_field(X, self.composite_fields_info)
+        X = dataprocessor.split_composite_field(X, self.composite_fields_info)
         return X  
 
 class RemoveColumnWithHighMissingVal(BaseEstimator, TransformerMixin):
@@ -45,7 +45,7 @@ class RemoveColumnWithHighMissingVal(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        dataprocessor.rm_cols_high_missing(X, self.missing_val_threshold)
+        X = dataprocessor.rm_cols_high_missing(X, self.missing_val_threshold)
         return X  
 
 class RemoveIDsCols(BaseEstimator, TransformerMixin):
@@ -57,7 +57,7 @@ class RemoveIDsCols(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        dataprocessor.rm_id_cols(X, self.id_cols)
+        X = dataprocessor.rm_id_cols(X, self.id_cols)
         return X 
 
 class ConvertObjToDateTime(BaseEstimator, TransformerMixin):
@@ -69,7 +69,7 @@ class ConvertObjToDateTime(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        dataprocessor.obj_to_datetime(X, self.datetime_fields_info)
+        X = dataprocessor.obj_to_datetime(X, self.datetime_fields_info)
         return X 
 
 class ConvertObjToNumeric(BaseEstimator, TransformerMixin):
@@ -81,10 +81,10 @@ class ConvertObjToNumeric(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        dataprocessor.numeric_conversion(X, self.numeric_field_info)
+        X = dataprocessor.numeric_conversion(X, self.numeric_field_info)
         return X 
 
-class RemoveMissingRowsInTargetVariable(BaseEstimator, TransformerMixin):
+class RemoveMissingValueInTargetVariable(BaseEstimator, TransformerMixin):
     def __init__(self, target_variable) -> None:
         super().__init__()
         self.target_variable = target_variable
@@ -93,12 +93,56 @@ class RemoveMissingRowsInTargetVariable(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        dataprocessor.rm_rows_target_var(X, self.target_variable)
+        X = dataprocessor.rm_rows_target_var(X, self.target_variable)
         return X 
-    
-# ('numeric_conversion', ConvertObjToNumeric(NUMERIC_FIELD_INFO))
-# dp.numeric_conversion(df_cruise, NUMERIC_FIELD_INFO)
 
+class RemoveMissingValueInContinuousVariable(BaseEstimator, TransformerMixin):
+    def __init__(self, continuous_variable) -> None:
+        super().__init__()
+        self.continuous_variable = continuous_variable
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        X= dataprocessor.remove_missing(X, self.continuous_variable)
+        return X 
+
+class DataCleansing(BaseEstimator, TransformerMixin):
+    def __init__(self, dirty_data_info) -> None:
+        super().__init__()
+        self.dirty_data_info = dirty_data_info
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        X = dataprocessor.dirty_data_processing(X, self.dirty_data_info)
+        return X 
+
+class DataValidation(BaseEstimator, TransformerMixin):
+    def __init__(self, valid_data_info) -> None:
+        super().__init__()
+        self.valid_data_info = valid_data_info
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        X = dataprocessor.valid_data_processing(X, self.valid_data_info)
+        return X 
+
+class ImputeMissingValue(BaseEstimator, TransformerMixin):
+    def __init__(self, impute_missing_val_info) -> None:
+        super().__init__()
+        self.impute_missing_val_info = impute_missing_val_info
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        X = dataprocessor.impute_missing_value_info(X, self.impute_missing_val_info)
+        return X 
 
 def main():
     # Read YAML file
@@ -136,6 +180,8 @@ def main():
     df_cruise = database.db_merge_db (df_pre_cruise, df_post_cruise)
     print("Successfully load and merge data files.")
 
+    print("Before PRINTOUT")
+    print(df_cruise.info())
     # Data Cleaning Pipeline
     data_cleaning_pipeline = Pipeline(steps=[
         ('none_to_null', ConvertNanToNone()),
@@ -144,8 +190,13 @@ def main():
         ('missing_val_threshold', RemoveColumnWithHighMissingVal(MISSING_VAL_THRESHOLD)),
         ('obj_to_datetime', ConvertObjToDateTime(DATETIME_FIELD_INFO)),
         ('numeric_conversion', ConvertObjToNumeric(NUMERIC_FIELD_INFO)),
-        ('rm_rows_target_var', RemoveMissingRowsInTargetVariable(TARGET_VARIABLE))
+        ('rm_rows_target_var', RemoveMissingValueInTargetVariable(TARGET_VARIABLE)),
+        ('remove_missing', RemoveMissingValueInContinuousVariable(CONTINUOUS_VARIABLE)),
+        ('dirty_data_processing', DataCleansing(DIRTY_DATA_INFO)),
+        ('valid_data_processing', DataValidation(VALID_DATA_INFO)),
+        ('impute_missing_value_info', ImputeMissingValue(IMPUTE_MISSING_VALUE_INFO))
     ])
+    # df_cruise = dp.valid_data_processing(df_cruise, VALID_DATA_INFO)
     df_cruise = data_cleaning_pipeline.transform(df_cruise)
     print("FINAL PRINTOUT")
     print(df_cruise.info())
