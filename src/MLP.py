@@ -81,7 +81,7 @@ class ConvertObjToNumeric(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        dataprocessor.obj_to_datetime(X, self.numeric_field_info)
+        dataprocessor.numeric_conversion(X, self.numeric_field_info)
         return X 
 
 # ('numeric_conversion', ConvertObjToNumeric(NUMERIC_FIELD_INFO))
@@ -130,9 +130,8 @@ def main():
         ('split_composite_fields', SplitCompositeFields(COMPOSITE_FIELD_INFO)),
         ('remove_id_cols', RemoveIDsCols(ID_FIELDS)),
         ('missing_val_threshold', RemoveColumnWithHighMissingVal(MISSING_VAL_THRESHOLD)),
-        ('obj_to_datetime', ConvertObjToDateTime(DATETIME_FIELD_INFO))
-        # ,
-        # ('numeric_conversion', ConvertObjToNumeric(NUMERIC_FIELD_INFO))
+        ('obj_to_datetime', ConvertObjToDateTime(DATETIME_FIELD_INFO)),
+        ('numeric_conversion', ConvertObjToNumeric(NUMERIC_FIELD_INFO))
     ])
     
     df_cruise = data_cleaning_pipeline.transform(df_cruise)

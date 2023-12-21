@@ -41,21 +41,19 @@ class DataProcessing:
             print(self.dataframe.shape)
         return None
     
-    def numeric_conversion(self, numeric_field_info:list)->None:
+    def numeric_conversion(self, df, numeric_field_info:list)->None:
         for numeric_field_info in numeric_field_info:
-            self.convert_number(ast.literal_eval(numeric_field_info['col_list']), 
+            self.convert_number(df, ast.literal_eval(numeric_field_info['col_list']), 
                                  numeric_field_info['dtype'])
-        if self.__display_stub == True:
-            print(self.dataframe.shape)
         return None
 
-    def convert_number(self, col_list_info: list, dtype:str):
+    def convert_number(self, df, col_list_info: list, dtype:str):
         for col_name in col_list_info:
             if dtype == 'int32':
-                self.dataframe[col_name] = self.dataframe[col_name].astype('Int32')
+                df[col_name] = df[col_name].astype('Int32')
             elif dtype == 'float64':
-                self.dataframe[col_name] = self.dataframe[col_name].astype('Float64')
-        return None
+                df[col_name] = df[col_name].astype('Float64')
+        return df
 
 
     def valid_data_processing(self, valid_data_info:list)->None:
