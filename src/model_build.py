@@ -12,59 +12,40 @@ from sklearn.svm import SVC
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 
-class Model_Build():
-    def __init__(self, dataframe:pd.DataFrame, target_variable, hyperparameters, test_size, random_state, is_notebook) -> None:
-        self.dataframe = dataframe
-        self.target_variable = target_variable
-        self.hyperparameters = hyperparameters
-        self.test_size = test_size
-        self.random_state = random_state
-        self.is_notebook = is_notebook
-        self.X = None
-        self.y = None
-        return None
-
-
-    def prepare_data(self):
-        X = self.dataframe.drop([self.target_variable], axis=1)
-        y = self.dataframe[self.target_variable]
-        self.X = X
-        self.y = y
-        return self.train_test_split(self.X, self.y, self.test_size, self.random_state)
+class ModelBuild():
+    def prepare_data(self, df, target_variable, test_size, random_state):
+        X = df.drop([target_variable], axis=1)
+        y = df[target_variable]
+        return self.train_test_split(X, y, test_size, random_state)
     
-    def model_processing(self, model):
-        X_train, X_test, y_train, y_test =  self.prepare_data()
-        X_train_smote, y_train_smote = self.SMOTE(X_train, y_train, self.random_state)
-        X_train = X_train_smote
-        y_train = y_train_smote
-        # X_train, X_test = self.min_max_scaler(X_train, X_test)
-        X_train, X_test = self.standard_scaler(X_train, X_test)
-        model_train = model.fit(X_train, y_train)
-        y_train_pred = model.predict(X_train)
-        y_test_pred = model.predict(X_test)
-        self.model_rpt_print(y_train, y_train_pred, y_test, y_test_pred, self.is_notebook)
-        return model_train
-
-
     def SMOTE(self, X_train, y_train, random_state):
         smt = SMOTE(random_state=random_state)
         os_data_X,os_data_y=smt.fit_resample(X_train, y_train)
         return os_data_X, os_data_y
+    
+    def model_processing(self, model, X_train, y_train, X_test):
+        model.fit(X_train, y_train)
+        # y_train_pred = model.predict(X_train)
+        # y_test_pred = model.predict(X_test)
+        # self.model_rpt_print(y_train, y_train_pred, y_test, y_test_pred, self.is_notebook)
+        return None
+
 
     def train_test_split(self, X, y, test_size, random_state):
         return train_test_split(X, y, test_size=test_size , random_state=random_state, stratify=y)
-    
-    def min_max_scaler(self, X_train, X_test):
-        n_scaler = MinMaxScaler()
-        X_train_scaled = n_scaler.fit_transform(X_train.astype(float))
-        X_test_scaled = n_scaler.transform(X_test.astype(float))
-        return X_train_scaled, X_test_scaled
 
-    def standard_scaler(self, X_train, X_test):
-        n_scaler = StandardScaler()
-        X_train_scaled = n_scaler.fit_transform(X_train.astype(float))
-        X_test_scaled = n_scaler.transform(X_test.astype(float))
-        return X_train_scaled, X_test_scaled
+    def normalised_data(self, X_train, X_test, scalar_option, col_to_scale):
+        X_train_normalised = X_train.copy()
+        X_test_normalised = X_test.copy()
+        if scalar_option=="MinMaxScaler":
+            n_scaler = MinMaxScaler()
+        else:
+            n_scaler = StandardScaler()
+        X_train_scaled = n_scaler.fit_transform(X_train[col_to_scale])
+        X_test_scaled = n_scaler.transform(X_test[col_to_scale])
+        X_train_normalised[col_to_scale] = X_train_scaled
+        X_test_normalised[col_to_scale] = X_test_scaled
+        return X_train_normalised, X_test_normalised
 
     def prt_classification_rpt(self, prt_label, y_actual, y_pred):
         print("\033[1m" + prt_label +" \033[0m")
@@ -126,46 +107,46 @@ class Model_Build():
         # Get best params and model
         return (random_search.best_params_)
 
-class Logistic_Regression(Model_Build):
+class Logistic_Regression(ModelBuild):
     # RFE and Logit
-    def model_processing(self):
-        lr = LogisticRegression(**self.hyperparameters)
-        super().model_processing(lr)
+    def model_processing(self, X_train, y_train, X_test, hyperparameters):
+        lr = LogisticRegression(**hyperparameters)
+        super().model_processing(lr,X_train, y_train, X_test)
         return None
     
-    def GridSearchCV(self, param_grid, verbose):
-        lr = LogisticRegression(**self.hyperparameters)
-        grid = super().GridSearchCV(lr, param_grid, verbose)
-        super().model_processing(grid)
+    # def GridSearchCV(self, param_grid, verbose):
+    #     lr = LogisticRegression(**self.hyperparameters)
+    #     grid = super().GridSearchCV(lr, param_grid, verbose)
+    #     super().model_processing(grid)
 
-    def RandomizedSearchCV(self, param_grid, verbose):
-        lr = SVC(**self.hyperparameters)
-        grid = super().RandomizedSearchCV(lr, param_grid, verbose)     
-        super().model_processing(grid)
-        return None
+    # def RandomizedSearchCV(self, param_grid, verbose):
+    #     lr = SVC(**self.hyperparameters)
+    #     grid = super().RandomizedSearchCV(lr, param_grid, verbose)     
+    #     super().model_processing(grid)
+    #     return None
 
-class Decision_Tree_Classifier(Model_Build):
-    def model_processing(self):
-        dtc = DecisionTreeClassifier(**self.hyperparameters)
-        dtc_train = super().model_processing(dtc)
+class Decision_Tree_Classifier(ModelBuild):
+    def model_processing(self, X_train, y_train, X_test, hyperparameters):
+        dtc = DecisionTreeClassifier(**hyperparameters)
+        dtc_train = super().model_processing(dtc,X_train, y_train, X_test)
         return dtc_train
 
-    def GridSearchCV(self, param_grid, verbose):
-        dtc = DecisionTreeClassifier(**self.hyperparameters)
-        grid = super().GridSearchCV(dtc, param_grid, verbose)     
-        super().model_processing(grid)
-        return None
+    # def GridSearchCV(self, param_grid, verbose):
+    #     dtc = DecisionTreeClassifier(**self.hyperparameters)
+    #     grid = super().GridSearchCV(dtc, param_grid, verbose)     
+    #     super().model_processing(grid)
+    #     return None
     
-    def RandomizedSearchCV(self, param_grid, verbose):
-        dtc = DecisionTreeClassifier(**self.hyperparameters)
-        grid = super().RandomizedSearchCV(dtc, param_grid, verbose)     
-        # super().model_processing(grid)
-        return None
+    # def RandomizedSearchCV(self, param_grid, verbose):
+    #     dtc = DecisionTreeClassifier(**self.hyperparameters)
+    #     grid = super().RandomizedSearchCV(dtc, param_grid, verbose)     
+    #     # super().model_processing(grid)
+    #     return None
     
-class Random_Forest_Classifier(Model_Build):
-    def model_processing(self):
-        rfc = RandomForestClassifier(**self.hyperparameters)
-        super().model_processing(rfc)
+class Random_Forest_Classifier(ModelBuild):
+    def model_processing(self, X_train, y_train, X_test,hyperparameters):
+        rfc = RandomForestClassifier(**hyperparameters)
+        super().model_processing(rfc, X_train, y_train, X_test)
         return None
 
     def GridSearchCV(self, param_grid, verbose):
@@ -179,37 +160,37 @@ class Random_Forest_Classifier(Model_Build):
         grid = super().RandomizedSearchCV(rfc, param_grid, verbose)     
         return None
 
-class Support_Vector_Classifier(Model_Build):
-    def model_processing(self):
-        svc = SVC(**self.hyperparameters)
-        super().model_processing(svc)
+class Support_Vector_Classifier(ModelBuild):
+    def model_processing(self, X_train, y_train, X_test,hyperparameters):
+        svc = SVC(**hyperparameters)
+        super().model_processing(svc, X_train, y_train, X_test)
         return None
 
-    def GridSearchCV(self, param_grid, verbose):
-        svc = SVC(**self.hyperparameters)
-        grid = super().GridSearchCV(svc, param_grid, verbose)     
-        super().model_processing(grid)
-        return None
+    # def GridSearchCV(self, param_grid, verbose):
+    #     svc = SVC(**self.hyperparameters)
+    #     grid = super().GridSearchCV(svc, param_grid, verbose)     
+    #     super().model_processing(grid)
+    #     return None
     
-    def RandomizedSearchCV(self, param_grid, verbose):
-        svc = SVC(**self.hyperparameters)
-        grid = super().RandomizedSearchCV(svc, param_grid, verbose)     
-        super().model_processing(grid)
-        return None
+    # def RandomizedSearchCV(self, param_grid, verbose):
+    #     svc = SVC(**self.hyperparameters)
+    #     grid = super().RandomizedSearchCV(svc, param_grid, verbose)     
+    #     super().model_processing(grid)
+    #     return None
 
-class Gradient_Boosting_Classifier(Model_Build):
-    def model_processing(self):
-        gbc = GradientBoostingClassifier(**self.hyperparameters)
-        super().model_processing(gbc)
+class Gradient_Boosting_Classifier(ModelBuild):
+    def model_processing(self, X_train, y_train, X_test,hyperparameters):
+        gbc = GradientBoostingClassifier(**hyperparameters)
+        super().model_processing(gbc, X_train, y_train, X_test)
         return None
     
-    def GridSearchCV(self, param_grid, verbose):
-        gbc = GradientBoostingClassifier(**self.hyperparameters)
-        grid = super().GridSearchCV(gbc, param_grid, verbose)     
-        super().model_processing(grid)
-        return None
+    # def GridSearchCV(self, param_grid, verbose):
+    #     gbc = GradientBoostingClassifier(**self.hyperparameters)
+    #     grid = super().GridSearchCV(gbc, param_grid, verbose)     
+    #     super().model_processing(grid)
+    #     return None
     
-    def RandomizedSearchCV(self, param_grid, verbose):
-        gbc = GradientBoostingClassifier(**self.hyperparameters)
-        super().RandomizedSearchCV(gbc, param_grid, verbose)     
-        return None
+    # def RandomizedSearchCV(self, param_grid, verbose):
+    #     gbc = GradientBoostingClassifier(**self.hyperparameters)
+    #     super().RandomizedSearchCV(gbc, param_grid, verbose)     
+    #     return None

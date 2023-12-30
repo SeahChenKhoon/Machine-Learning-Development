@@ -6,6 +6,7 @@ import ast
 import util
 import database
 from data_preprocessing import DataProcessing
+from feature_engineering import FeatureEngineering
 
 DATA_PATH =  "../data/"
 YAML_FILEPATHNAME = "../config.yaml"
@@ -14,7 +15,7 @@ POST_CRUISE_DB = 1
 IS_NOTEBOOK = True
 
 dataprocessor = DataProcessing()
-
+featureengineering = FeatureEngineering()
 class ConvertNanToNone(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         return self
@@ -144,6 +145,64 @@ class ImputeMissingValue(BaseEstimator, TransformerMixin):
         X = dataprocessor.impute_missing_value_info(X, self.impute_missing_val_info)
         return X 
 
+class LabelEncode(BaseEstimator, TransformerMixin):
+    def __init__(self, non_numeric_cols) -> None:
+        super().__init__()
+        self.non_numeric_cols = non_numeric_cols
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        X = dataprocessor.label_encoder(X, self.non_numeric_cols)
+        return X 
+    
+class DeriveYearFromDate(BaseEstimator, TransformerMixin):
+    def __init__(self, derive_year_from_date) -> None:
+        super().__init__()
+        self.derive_year_from_date = derive_year_from_date
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        X = featureengineering.yyyy_from_date(X, self.derive_year_from_date)
+        return X 
+
+class OneHotEncoding(BaseEstimator, TransformerMixin):
+    def __init__(self, one_hot_encode_fields) -> None:
+        super().__init__()
+        self.one_hot_encode_fields = one_hot_encode_fields
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        X = featureengineering.one_hot_key_encode(X, self.one_hot_encode_fields)
+        return X 
+
+class ConvertMilesToKM(BaseEstimator, TransformerMixin):
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        # Convert None to NaN
+        X = featureengineering.convert_miles_to_KM(X)
+        return X  # Return the rows where null is changed to None
+
+class CalYearDiff(BaseEstimator, TransformerMixin):
+    def __init__(self, diff_years) -> None:
+        super().__init__()
+        self.diff_years = diff_years
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        # Convert None to NaN
+        X = featureengineering.calc_year_diff(X, self.diff_years)
+        return X  # Return the rows where null is changed to None
+
 def main():
     # Read YAML file
     yaml_data = util.read_yaml(YAML_FILEPATHNAME)
@@ -164,6 +223,7 @@ def main():
     DATE_YYYY_INFO = yaml_data['convert_date_yyyy']
     IMPUTE_MISSING_VALUE_INFO = yaml_data['impute_missing_value']
     OHE_FIELDS = ast.literal_eval(yaml_data['one_hot_encode'])
+    DIFF_YEARS = yaml_data['diff_year']
     VERBOSE = yaml_data['verbose']
     LR_HYPERPARAM = yaml_data['hyperparameters']['lr_param']
     DTC_HYPERPARAM = yaml_data['hyperparameters']['dtc_param']
@@ -194,10 +254,23 @@ def main():
         ('remove_missing', RemoveMissingValueInContinuousVariable(CONTINUOUS_VARIABLE)),
         ('dirty_data_processing', DataCleansing(DIRTY_DATA_INFO)),
         ('valid_data_processing', DataValidation(VALID_DATA_INFO)),
-        ('impute_missing_value_info', ImputeMissingValue(IMPUTE_MISSING_VALUE_INFO))
+        ('impute_missing_value_info', ImputeMissingValue(IMPUTE_MISSING_VALUE_INFO)),
+        ('label_encode', LabelEncode(NON_NUMERIC_COL))
     ])
-    # df_cruise = dp.valid_data_processing(df_cruise, VALID_DATA_INFO)
+
+    # Feature Engineering Pipeline
+    feature_engineering_pipeline = Pipeline(steps=[
+        ('derive_year_from_date', DeriveYearFromDate(DATE_YYYY_INFO)),
+        ('one_hot_encoding', OneHotEncoding(OHE_FIELDS)),
+        ('convert_miles_to_KM', ConvertMilesToKM()),
+        ('diff_date', CalYearDiff(DIFF_YEARS))
+    ])
+
+
     df_cruise = data_cleaning_pipeline.transform(df_cruise)
+    df_cruise = feature_engineering_pipeline.transform(df_cruise)
+
+
     print("FINAL PRINTOUT")
     print(df_cruise.info())
 

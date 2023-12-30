@@ -25,7 +25,7 @@ survey_scale:list[str]= [None, 'Not at all important', 'A little important', 'So
 with open('../config.yaml', 'r') as yaml_file:
     data = yaml.safe_load(yaml_file)
 
-dp = data_preprocessing.DataPreprocessing()
+dp = data_preprocessing.DataProcessing()
 dp.load_data(data['src_path'], data['databases'])
 
 TARGET_VARIABLE = data['target_variable']

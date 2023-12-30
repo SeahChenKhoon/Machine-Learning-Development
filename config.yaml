@@ -97,11 +97,17 @@ impute_missing_value:
 
 one_hot_encode: "['Traffic']"
 
+diff_year:
+  - minuend_col: 'Year of Logging'
+    subtrahend_col: 'Year of Birth'
+    new_col: 'Age'
+
 verbose: 1    
 
 hyperparameters:
-  lr_param: {}
+  lr_param: {'max_iter':5000}
   dtc_param: {'criterion':'gini', 'max_depth':12,  'min_samples_split':4, 'max_features':'sqrt'}
   rfc_param: {'n_estimators':150, 'min_samples_split':20, 'min_samples_leaf': 28, 'max_features': 'sqrt', 'max_depth': 8, 'criterion': 'gini', 'class_weight': 'balanced'}
   gbc_param: {'n_estimators': 200, 'min_samples_split': 28, 'min_samples_leaf': 24, 'max_depth': 8, 'criterion': 'friedman_mse'}
 
+scalar_option: "StandardScaler"
