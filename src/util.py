@@ -32,6 +32,9 @@ def util_rm_col(df_dataframe: pd.DataFrame, list_cols:list[str])->None:
 
     Returns:
         None
+    
+    Example:
+        util.util_rm_col(df_cruise, "['Ext_Intcode_x', 'Ext_Intcode_y']")
     """
     df_dataframe.drop(list_cols, axis=1,inplace=True)
     return None
@@ -47,9 +50,12 @@ def output_csv (data_path:str,dataframe:pd.DataFrame,dateframe_name:str)->None:
 
     Returns:
         dataframe (pd.DataFrame): Return back the processed dataset    
+
+    Example:
+        util.output_csv("./data/", df_cruise, "df_cruise")
     """
     timestamp = datetime.now().strftime("%Y%m%d%H%M")
     filename = f"{data_path}{dateframe_name}_{timestamp}.csv"
     dataframe.to_csv(filename)
-    return
+    return None
         
