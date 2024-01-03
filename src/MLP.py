@@ -1,34 +1,64 @@
+# Importation of libraries
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.metrics import confusion_matrix, classification_report, accuracy_score
-
-import ast
-
-import util
-import database
 from data_preprocessing import DataProcessing
+
 from feature_engineering import FeatureEngineering
 from model_build import ModelBuild
 from model_build import Gradient_Boosting_Classifier
 
+import ast
+import pandas as pd
+import util
+import database
+
+
+#Define the data path from src folder
 DATA_PATH =  "../data/"
+#Define the yaml path
 YAML_FILEPATHNAME = "../config.yaml"
+#Define position of pre_cruise database configuration in yaml file
 PRE_CRUISE_DB = 0
 POST_CRUISE_DB = 1
 IS_NOTEBOOK = True
 
+# Initialisation of Classes
 dataprocessor = DataProcessing()
 featureengineering = FeatureEngineering()
 modelbuild = ModelBuild()
 
 class ConvertNanToNone(BaseEstimator, TransformerMixin):
+    """
+    A custom scikit-learn transformer to replace NaN values with None in a dataset.
+
+    This transformer fits to the data during training (fit method) and transforms
+    the data by replacing NaN with None (transform method).
+
+    Parameters:
+        None
+
+    Methods:
+        fit(X, y=None): Fits the transformer to the data.
+        transform(X): Transforms the data by replacing NaN with None.
+    """
     def fit(self, X, y=None):
+        """
+        Fit method for the transformer. Since the transformer doesn't learn from the data,
+        it simply returns itself.
+
+        Parameters:
+            X: The input data.
+            y: The target labels (default=None).
+
+        Returns:
+            self
+        """
         return self
 
     def transform(self, X):
-        # Convert None to NaN
         X = dataprocessor.replace_nan_none(X)
-        return X  # Return the rows where null is changed to None
+        return X
     
 class SplitCompositeFields(BaseEstimator, TransformerMixin):
     def __init__(self, composite_fields_info) -> None:
@@ -221,10 +251,37 @@ class PrepareData(BaseEstimator, TransformerMixin):
     def transform(self, X):
         return modelbuild.prepare_data(X, self.target_variable, self.test_size, self.random_state)
     
-def main():
-    # Read YAML file
+def main() -> None:
+    """
+    Main function to demonstrate 
+        1> Read configurations using the 'read_yaml' function
+        2> Read pre_cruise 
+        3> Read post_cruise data
+        4> Merge Pre_cruise and Post_cruise to form df_cruise with Index as the key
+        5> Create Data Cleansing Pipeline with the following functions:
+            a> Convert NaN to Null
+            b> Split composite field to seperate fields
+            c> Remove columns with high missing threshold value
+            d> Convert Object to DateTime
+            e> Convert Object to Numeric 
+            f> Remove missing value from target variable
+            g> Remove missing value from Continuous Variables
+            h> Remove known dirty data from variables
+            g> Remove any unknown data from variables
+            i> Impute missing values with values
+            j> Perform label Encode on non numeric columns 
+        6> Create Feature Engineering Pipeline with the following functions:
+            a> Derive year from date
+            b> Perform one hot key encode on multi-valued non numeric columns
+            c> Standardise distance to KM
+            d> Derive age from DOB
+        7> Combine Data Cleansing Pipeline and Feature Engineering Pipeline into preprocessing 
+            pipelines
+        8> Execute the preprocessing using the df_cruise dataset
+        9> Derive the selected model from yaml file and output accuracy score
+    """
+    # Read configurations using the 'read_yaml' function
     yaml_data = util.read_yaml(YAML_FILEPATHNAME)
-    DISPLAY_STUB = yaml_data['display_stub']
     TEST_SIZE = yaml_data['test_size']
     RANDOM_STATE = yaml_data['random_state']
     TARGET_VARIABLE = yaml_data['target_variable']
@@ -258,6 +315,7 @@ def main():
 
     print("Before PRINTOUT")
     print(df_cruise.info())
+
     # Data Cleaning Pipeline
     data_cleaning_pp = Pipeline(steps=[
         ('none_to_null', ConvertNanToNone()),
@@ -282,10 +340,23 @@ def main():
         ('diff_date', CalYearDiff(DIFF_YEARS))
     ])
 
-    preprocessing_pp = make_pipeline(data_cleaning_pp, feature_engineering_pp) 
-    df_cruise = preprocessing_pp.transform(df_cruise)
+    # Combine data_cleaning_pp, feature_engineering_pp into cruise_pipeline
+    cruise_pipeline = make_pipeline(data_cleaning_pp, feature_engineering_pp) 
+    df_cruise = cruise_pipeline.transform(df_cruise)
 
-    def fit_and_print(model, hyperparameters, df_cruise):
+    def fit_and_print(model, hyperparameters:dict, df_cruise:pd.DataFrame)-> None:
+        """
+        Fits a machine learning model, evaluates its performance on training and testing data,
+        and prints the accuracy scores.
+
+        Parameters:
+            model: The machine learning model object.
+            hyperparameters: Dictionary containing hyperparameters for the model.
+            df_cruise: DataFrame containing the dataset.
+
+        Returns:
+            None
+        """
         X_train, X_test, y_train, y_test = modelbuild.prepare_data(df_cruise, TARGET_VARIABLE,
                                                                    TEST_SIZE, RANDOM_STATE)
         X_train_smote, y_train_smote = modelbuild.SMOTE(X_train, y_train, RANDOM_STATE)
@@ -293,9 +364,13 @@ def main():
         y_train_pred, y_test_pred = model.model_processing(X_train_normalised, y_train_smote, X_test_normalised, hyperparameters)
         print("Train Accuracy Score : " + str(accuracy_score(y_train_smote, y_train_pred)))
         print("Test Accuracy Score : " + str(accuracy_score(y_test, y_test_pred)))
+        return None
 
+    # Initialised the selected model
     model = eval(SELECTED_MODEL['Model_Class_Name'])
+    # Derived the hyperparameters values
     hyperparameters = ast.literal_eval(SELECTED_MODEL['Model_Hyperparameters'])
+    # Build the selected model
     fit_and_print(model, hyperparameters, df_cruise)
 
 if __name__ == "__main__":

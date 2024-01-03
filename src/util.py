@@ -2,16 +2,37 @@ import pandas as pd
 import numpy as np
 import yaml
 from datetime import datetime
-# import numpy as np
-# from typing import Any
+from typing import Any, Dict
 
-def read_yaml(yaml_filepath:str):
-    # Read the YAML file
+def read_yaml(yaml_filepath:str) -> Dict[str, Any]:
+    """
+    Reads a YAML file and returns the loaded data.
+
+    Parameters:
+        yaml_filepath (str): The path to the YAML file.
+
+    Returns:
+        Dict[str, Any]: A dictionary representing the loaded YAML data.
+
+    Example:
+        yaml_data = util.read_yaml("../config.yaml")
+    """
+    #Open yaml file
     with open(yaml_filepath, 'r') as file:
-        data = yaml.safe_load(file)
-        return data
+        # return configurable data from yaml file
+        return yaml.safe_load(file)
 
 def util_rm_col(df_dataframe: pd.DataFrame, list_cols:list[str])->None:
+    """
+    Remove specified columns from a pandas DataFrame in-place.
+
+    Parameters:
+        df_dataframe (pd.DataFrame): The DataFrame from which columns will be removed.
+        list_cols (List[str]): A list of column names to be removed.
+
+    Returns:
+        None
+    """
     df_dataframe.drop(list_cols, axis=1,inplace=True)
     return None
 
@@ -31,61 +52,4 @@ def output_csv (data_path:str,dataframe:pd.DataFrame,dateframe_name:str)->None:
     filename = f"{data_path}{dateframe_name}_{timestamp}.csv"
     dataframe.to_csv(filename)
     return
-    
-# def timer(start_time=datetime)->datetime:
-#     """
-#     Measure and print the elapsed time.
-
-#     This function calculates and prints the elapsed time since the provided `start_time`.
-
-#     Parameters:
-#         start_time (datetime, optional): The starting time to calculate the elapsed time from.
-#             If not provided, the current time will be used as the starting time.
-
-#     Returns:
-#         datetime: The `start_time` when provided, or the current time if `start_time` is None.\
-#     """
-#     if not start_time:
-#         start_time = datetime.now()
-#         return start_time
-#     elif start_time:
-#         thour, temp_sec = divmod((datetime.now() - start_time).total_seconds(), 3600)
-#         tmin, tsec = divmod(temp_sec, 60)
-#         print("\n Time taken: %i hours %i minutes and %s seconds." % (thour, tmin, round(tsec,2)))
-#         return
-
-
-
-# def drop_columns(dataframe:pd.DataFrame, col_names:list)->pd.DataFrame:
-#     """
-#     Drop specified columns from a pandas DataFrame.
-
-#     Parameters:
-#     - dataframe (pd.DataFrame): The DataFrame from which columns will be dropped.
-#     - col_names (list of str): A list of column names to be dropped from the DataFrame.
-
-#     Returns:
-#     - pd.DataFrame: A new DataFrame with the specified columns removed.
-#     """
-#     for col_name in col_names:
-#         dataframe.drop(col_name, axis=1,inplace=True)
-#     return dataframe
-
-# def read_config_file(config_file_path: str)-> Any:
-#     """
-#     Read and load configuration data from a YAML file.
-
-#     This function reads and loads configuration data from a YAML file located at the specified
-#     `config_file_path`.
-
-#     Parameters:
-#         config_file_path (str): The path to the YAML configuration file.
-
-#     Returns:
-#         Any: The loaded configuration data. The data type may vary depending on the content of
-#         the YAML file.
-#     """
-#     with open(config_file_path, 'r') as file:
-#         config = yaml.safe_load(file)
-#     return config
-
+        
