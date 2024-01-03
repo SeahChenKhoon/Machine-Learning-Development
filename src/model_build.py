@@ -25,11 +25,9 @@ class ModelBuild():
     
     def model_processing(self, model, X_train, y_train, X_test):
         model.fit(X_train, y_train)
-        # y_train_pred = model.predict(X_train)
-        # y_test_pred = model.predict(X_test)
-        # self.model_rpt_print(y_train, y_train_pred, y_test, y_test_pred, self.is_notebook)
-        return None
-
+        y_train_pred = model.predict(X_train)
+        y_test_pred = model.predict(X_test)
+        return y_train_pred, y_test_pred
 
     def train_test_split(self, X, y, test_size, random_state):
         return train_test_split(X, y, test_size=test_size , random_state=random_state, stratify=y)
@@ -59,14 +57,14 @@ class ModelBuild():
         print("Test Recall:",format(metrics.recall_score(y_actual, y_pred,average='micro'), '.4f')) 
         return None
 
-    def model_rpt_print(self, y_train, y_train_pred, y_test, y_test_pred, is_notebook):
+    def model_rpt_print(self, y_train, y_train_pred, y_test, y_test_pred):
         print("\033[1mClassification Report \033[0m")
         self.prt_classification_rpt("Train", y_train, y_train_pred)
         self.prt_classification_rpt("Test", y_test, y_test_pred)
         print("")
         print("\033[1mConfusion Metric\033[0m")
-        Visualisation.vs_confusion_matrix("Train", y_train, y_train_pred, is_notebook)
-        Visualisation.vs_confusion_matrix("Test", y_test, y_test_pred, is_notebook)
+        Visualisation.vs_confusion_matrix("Train", y_train, y_train_pred)
+        Visualisation.vs_confusion_matrix("Test", y_test, y_test_pred)
         print("")
         print("\033[1mPerformance Metrics\033[0m")
         self.prt_perf_score("Train", y_train, y_train_pred)
@@ -111,8 +109,7 @@ class Logistic_Regression(ModelBuild):
     # RFE and Logit
     def model_processing(self, X_train, y_train, X_test, hyperparameters):
         lr = LogisticRegression(**hyperparameters)
-        super().model_processing(lr,X_train, y_train, X_test)
-        return None
+        return super().model_processing(lr,X_train, y_train, X_test)
     
     # def GridSearchCV(self, param_grid, verbose):
     #     lr = LogisticRegression(**self.hyperparameters)
@@ -128,8 +125,7 @@ class Logistic_Regression(ModelBuild):
 class Decision_Tree_Classifier(ModelBuild):
     def model_processing(self, X_train, y_train, X_test, hyperparameters):
         dtc = DecisionTreeClassifier(**hyperparameters)
-        dtc_train = super().model_processing(dtc,X_train, y_train, X_test)
-        return dtc_train
+        return super().model_processing(dtc,X_train, y_train, X_test)
 
     # def GridSearchCV(self, param_grid, verbose):
     #     dtc = DecisionTreeClassifier(**self.hyperparameters)
@@ -146,8 +142,7 @@ class Decision_Tree_Classifier(ModelBuild):
 class Random_Forest_Classifier(ModelBuild):
     def model_processing(self, X_train, y_train, X_test,hyperparameters):
         rfc = RandomForestClassifier(**hyperparameters)
-        super().model_processing(rfc, X_train, y_train, X_test)
-        return None
+        return super().model_processing(rfc, X_train, y_train, X_test)
 
     def GridSearchCV(self, param_grid, verbose):
         rfc = RandomForestClassifier(**self.hyperparameters)
@@ -157,14 +152,12 @@ class Random_Forest_Classifier(ModelBuild):
 
     def RandomizedSearchCV(self, param_grid, verbose):
         rfc = RandomForestClassifier(**self.hyperparameters)
-        grid = super().RandomizedSearchCV(rfc, param_grid, verbose)     
-        return None
+        return super().RandomizedSearchCV(rfc, param_grid, verbose)     
 
 class Support_Vector_Classifier(ModelBuild):
     def model_processing(self, X_train, y_train, X_test,hyperparameters):
         svc = SVC(**hyperparameters)
-        super().model_processing(svc, X_train, y_train, X_test)
-        return None
+        return super().model_processing(svc, X_train, y_train, X_test)
 
     # def GridSearchCV(self, param_grid, verbose):
     #     svc = SVC(**self.hyperparameters)
@@ -181,8 +174,7 @@ class Support_Vector_Classifier(ModelBuild):
 class Gradient_Boosting_Classifier(ModelBuild):
     def model_processing(self, X_train, y_train, X_test,hyperparameters):
         gbc = GradientBoostingClassifier(**hyperparameters)
-        super().model_processing(gbc, X_train, y_train, X_test)
-        return None
+        return super().model_processing(gbc, X_train, y_train, X_test)
     
     # def GridSearchCV(self, param_grid, verbose):
     #     gbc = GradientBoostingClassifier(**self.hyperparameters)

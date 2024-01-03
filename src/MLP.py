@@ -1,5 +1,6 @@
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.metrics import confusion_matrix, classification_report, accuracy_score
 
 import ast
 
@@ -7,6 +8,8 @@ import util
 import database
 from data_preprocessing import DataProcessing
 from feature_engineering import FeatureEngineering
+from model_build import ModelBuild
+from model_build import Gradient_Boosting_Classifier
 
 DATA_PATH =  "../data/"
 YAML_FILEPATHNAME = "../config.yaml"
@@ -16,6 +19,8 @@ IS_NOTEBOOK = True
 
 dataprocessor = DataProcessing()
 featureengineering = FeatureEngineering()
+modelbuild = ModelBuild()
+
 class ConvertNanToNone(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         return self
@@ -203,6 +208,19 @@ class CalYearDiff(BaseEstimator, TransformerMixin):
         X = featureengineering.calc_year_diff(X, self.diff_years)
         return X  # Return the rows where null is changed to None
 
+class PrepareData(BaseEstimator, TransformerMixin):
+    def __init__(self, target_variable, test_size, random_state) -> None:
+        super().__init__()
+        self.target_variable = target_variable
+        self.test_size = test_size
+        self.random_state = random_state
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        return modelbuild.prepare_data(X, self.target_variable, self.test_size, self.random_state)
+    
 def main():
     # Read YAML file
     yaml_data = util.read_yaml(YAML_FILEPATHNAME)
@@ -224,11 +242,9 @@ def main():
     IMPUTE_MISSING_VALUE_INFO = yaml_data['impute_missing_value']
     OHE_FIELDS = ast.literal_eval(yaml_data['one_hot_encode'])
     DIFF_YEARS = yaml_data['diff_year']
-    VERBOSE = yaml_data['verbose']
-    LR_HYPERPARAM = yaml_data['hyperparameters']['lr_param']
-    DTC_HYPERPARAM = yaml_data['hyperparameters']['dtc_param']
-    RFC_HYPERPARAM = yaml_data['hyperparameters']['rfc_param']
-    GBC_HYPERPARAM = yaml_data['hyperparameters']['gbc_param']
+    COL_TO_NORMALISE = ast.literal_eval(yaml_data['column_to_normalise'])
+    SELECTED_MODEL = yaml_data['selected_model']
+    SCALAR_OPT = yaml_data['scalar_option']
 
     # Read Pre_cruise data
     df_pre_cruise = database.db_read(DATA_PATH, DB_INFO[PRE_CRUISE_DB])
@@ -243,7 +259,7 @@ def main():
     print("Before PRINTOUT")
     print(df_cruise.info())
     # Data Cleaning Pipeline
-    data_cleaning_pipeline = Pipeline(steps=[
+    data_cleaning_pp = Pipeline(steps=[
         ('none_to_null', ConvertNanToNone()),
         ('split_composite_fields', SplitCompositeFields(COMPOSITE_FIELD_INFO)),
         ('remove_id_cols', RemoveIDsCols(ID_FIELDS)),
@@ -259,20 +275,28 @@ def main():
     ])
 
     # Feature Engineering Pipeline
-    feature_engineering_pipeline = Pipeline(steps=[
+    feature_engineering_pp = Pipeline(steps=[
         ('derive_year_from_date', DeriveYearFromDate(DATE_YYYY_INFO)),
         ('one_hot_encoding', OneHotEncoding(OHE_FIELDS)),
         ('convert_miles_to_KM', ConvertMilesToKM()),
         ('diff_date', CalYearDiff(DIFF_YEARS))
     ])
 
+    preprocessing_pp = make_pipeline(data_cleaning_pp, feature_engineering_pp) 
+    df_cruise = preprocessing_pp.transform(df_cruise)
 
-    df_cruise = data_cleaning_pipeline.transform(df_cruise)
-    df_cruise = feature_engineering_pipeline.transform(df_cruise)
+    def fit_and_print(model, hyperparameters, df_cruise):
+        X_train, X_test, y_train, y_test = modelbuild.prepare_data(df_cruise, TARGET_VARIABLE,
+                                                                   TEST_SIZE, RANDOM_STATE)
+        X_train_smote, y_train_smote = modelbuild.SMOTE(X_train, y_train, RANDOM_STATE)
+        X_train_normalised, X_test_normalised = modelbuild.normalised_data(X_train_smote, X_test, SCALAR_OPT, COL_TO_NORMALISE)
+        y_train_pred, y_test_pred = model.model_processing(X_train_normalised, y_train_smote, X_test_normalised, hyperparameters)
+        print("Train Accuracy Score : " + str(accuracy_score(y_train_smote, y_train_pred)))
+        print("Test Accuracy Score : " + str(accuracy_score(y_test, y_test_pred)))
 
-
-    print("FINAL PRINTOUT")
-    print(df_cruise.info())
+    model = eval(SELECTED_MODEL['Model_Class_Name'])
+    hyperparameters = ast.literal_eval(SELECTED_MODEL['Model_Hyperparameters'])
+    fit_and_print(model, hyperparameters, df_cruise)
 
 if __name__ == "__main__":
     main()

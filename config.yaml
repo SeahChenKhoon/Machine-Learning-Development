@@ -102,12 +102,30 @@ diff_year:
     subtrahend_col: 'Year of Birth'
     new_col: 'Age'
 
+scalar_option: "StandardScaler"
+
+column_to_normalise: "['Age','Distance']"
+
 verbose: 1    
 
-hyperparameters:
-  lr_param: {'max_iter':5000}
-  dtc_param: {'criterion':'gini', 'max_depth':12,  'min_samples_split':4, 'max_features':'sqrt'}
-  rfc_param: {'n_estimators':150, 'min_samples_split':20, 'min_samples_leaf': 28, 'max_features': 'sqrt', 'max_depth': 8, 'criterion': 'gini', 'class_weight': 'balanced'}
-  gbc_param: {'n_estimators': 200, 'min_samples_split': 28, 'min_samples_leaf': 24, 'max_depth': 8, 'criterion': 'friedman_mse'}
+selected_models:
+  - Model_Name: "Logistic Regression"
+    Model_Class_Name: "Logistic_Regression()"
+    Model_Hyperparameter: "{'max_iter':5000}"
+  - Model_Name: "Decision Tree Classifier"
+    Model_Class_Name: "Decision_Tree_Classifier()"
+    Model_Hyperparameter: "{'criterion':'gini', 'max_depth':12,  'min_samples_split':4, 'max_features':'sqrt'}"
+  - Model_Name: "Random Forest Classifier"
+    Model_Class_Name: "Random_Forest_Classifier()"
+    Model_Hyperparameter: "{'n_estimators':150, 'min_samples_split':20, 'min_samples_leaf': 28, 'max_features': 'sqrt', 'max_depth': 8, 'criterion': 'gini', 'class_weight': 'balanced'}"
+  - Model_Name: "Gradient Boosting Classifier"
+    Model_Class_Name: "Gradient_Boosting_Classifier()"
+    Model_Hyperparameter: "{'n_estimators': 200, 'min_samples_split': 28, 'min_samples_leaf': 24, 'max_depth': 8, 'criterion': 'friedman_mse'}"
 
-scalar_option: "StandardScaler"
+selected_model: 
+  Model_Name: "Gradient Boosting Classifier"
+  Model_Class_Name: "Gradient_Boosting_Classifier()"
+  Model_Hyperparameters: "{'n_estimators': 200, 'min_samples_split': 28, 'min_samples_leaf': 24, 'max_depth': 8, 'criterion': 'friedman_mse'}"
+
+    
+    

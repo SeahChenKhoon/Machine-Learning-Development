@@ -4,20 +4,16 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 
-def vs_confusion_matrix(prt_label, y_actual, y_predict, is_notebook):
+def vs_confusion_matrix(prt_label, y_actual, y_predict):
     # print(y_actual.shape)
     # print(y_predict.shape)
     print("\033[1m" + prt_label + "\033[0m")
-    if is_notebook == True:
-        cm=confusion_matrix(y_actual, y_predict, labels=[0, 1, 2])
-        df_cm = pd.DataFrame(cm, index = [i for i in ["Actual\nDeluxe","Actual\nLuxury","Actual\nStandard"]],
-            columns = [i for i in ["Predict\nDeluxe","Predict\nLuxury","Predict\nStandard"]])
-        plt.figure(figsize = (7,5))
-        sns.heatmap(df_cm, annot=True, fmt="d",cmap='Blues')
-        plt.show()
-    else:
-        print(confusion_matrix(y_actual, y_predict))
-
+    cm=confusion_matrix(y_actual, y_predict, labels=[0, 1, 2])
+    df_cm = pd.DataFrame(cm, index = [i for i in ["Actual\nDeluxe","Actual\nLuxury","Actual\nStandard"]],
+        columns = [i for i in ["Predict\nDeluxe","Predict\nLuxury","Predict\nStandard"]])
+    plt.figure(figsize = (7,5))
+    sns.heatmap(df_cm, annot=True, fmt="d",cmap='Blues')
+    plt.show()
 
 def vs_countplot_both(df_dataframe: pd.DataFrame, x_col:str, hue_col:str=None)->None:
     plt.figure(figsize=(10, 4))
