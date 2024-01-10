@@ -4,15 +4,38 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 
-def vs_confusion_matrix(prt_label, y_actual, y_predict):
-    # print(y_actual.shape)
-    # print(y_predict.shape)
+def vs_confusion_matrix(prt_label: str, y_actual: list, y_predict: list)->None:
+    """
+    Display a visual representation of a confusion matrix.
+
+    Parameters:
+    - prt_label (str): A label for the confusion matrix to be printed.
+    - y_actual (list): List of actual class labels.
+    - y_predict (list): List of predicted class labels.
+
+    Returns:
+    - None: Displays a confusion matrix visualization.
+
+    Example:
+        Visualisation.vs_confusion_matrix("Train", y_train, y_train_pred)
+    """
+    # Print the label for the confusion matrix
     print("\033[1m" + prt_label + "\033[0m")
+
+    # Calculate the confusion matrix
     cm=confusion_matrix(y_actual, y_predict, labels=[0, 1, 2])
+
+    # Create a DataFrame for better visualization
     df_cm = pd.DataFrame(cm, index = [i for i in ["Actual\nDeluxe","Actual\nLuxury","Actual\nStandard"]],
         columns = [i for i in ["Predict\nDeluxe","Predict\nLuxury","Predict\nStandard"]])
+    
+    # Set up the heatmap figure
     plt.figure(figsize = (7,5))
+
+    # Plot the confusion matrix using seaborn
     sns.heatmap(df_cm, annot=True, fmt="d",cmap='Blues')
+
+    # Display the plot
     plt.show()
 
 def vs_countplot_both(df_dataframe: pd.DataFrame, x_col:str, hue_col:str=None)->None:
